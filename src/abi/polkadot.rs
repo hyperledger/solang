@@ -22,6 +22,7 @@ use solang_parser::pt;
 
 use crate::{
     codegen::revert::{SolidityError, ERROR_SELECTOR, PANIC_SELECTOR},
+    emit::polkadot::SCRATCH_SIZE,
     sema::{
         ast::{self, ArrayLength, EventDecl, Function},
         tags::render,
@@ -302,6 +303,7 @@ pub fn gen_project(contract_no: usize, ns: &ast::Namespace) -> InkProject {
                 let root = RootLayout::new(
                     layout_key,
                     type_to_storage_layout(ty, layout_key, &registry),
+                    ty.into(),
                 );
                 Some(FieldLayout::new(var.name.clone(), root))
             } else {
@@ -341,7 +343,7 @@ pub fn gen_project(contract_no: usize, ns: &ast::Namespace) -> InkProject {
         .payable(payable)
         .args(args)
         .docs(vec![render(&f.tags).as_str()])
-        .returns(ReturnTypeSpec::new(None))
+        .returns(ReturnTypeSpec::new(TypeSpec::default()))
         .done()
     };
 
@@ -407,7 +409,7 @@ pub fn gen_project(contract_no: usize, ns: &ast::Namespace) -> InkProject {
                 Some(TypeSpec::new(ty.into(), path))
             }
         };
-        let ret_type = ReturnTypeSpec::new(ret_spec);
+        let ret_type = ReturnTypeSpec::new(ret_spec.unwrap_or_default());
         let args = f
             .params
             .iter()
@@ -510,6 +512,7 @@ pub fn gen_project(contract_no: usize, ns: &ast::Namespace) -> InkProject {
             primitive_to_ty(&ast::Type::Uint(64), &mut registry).into(),
             path!("Timestamp"),
         ))
+        .static_buffer_size(SCRATCH_SIZE as usize)
         .done();
 
     let mut error_definitions = vec![

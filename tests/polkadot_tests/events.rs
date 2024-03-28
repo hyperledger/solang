@@ -1,14 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::build_solidity;
-use ink_env::{
-    hash::{Blake2x256, CryptoHash},
-    topics::PrefixedValue,
-};
+use ink_env::hash::{Blake2x256, CryptoHash};
 use ink_primitives::{AccountId, Hash};
 use parity_scale_codec::Encode;
 use solang::{file_resolver::FileResolver, Target};
 use std::ffi::OsStr;
+
+struct PrefixedValue<'a, 'b, T> {
+    pub prefix: &'a [u8],
+    pub value: &'b T,
+}
+
+impl<X: Encode> Encode for PrefixedValue<'_, '_, X> {
+    #[inline]
+    fn size_hint(&self) -> usize {
+        self.prefix.size_hint() + self.value.size_hint()
+    }
+
+    #[inline]
+    fn encode_to<T: parity_scale_codec::Output + ?Sized>(&self, dest: &mut T) {
+        self.prefix.encode_to(dest);
+        self.value.encode_to(dest);
+    }
+}
 
 fn topic_hash(encoded: &[u8]) -> Hash {
     let mut buf = [0; 32];

@@ -54,8 +54,8 @@ anchor-syn = { version = "0.29.0", features = ["idl-build"] }
 convert_case = "0.6"
 parse-display = "0.9"
 parity-scale-codec = "3.6"
-ink_env = "4.3.0"
-ink_metadata = "4.3.0"
+ink_env = "5.0.0"
+ink_metadata = "5.0.0"
 scale-info = "2.10"
 petgraph = "0.6"
 wasmparser = "0.121.0"
@@ -89,7 +89,7 @@ borsh = "1.1"
 borsh-derive = "1.1"
 rayon = "1"
 walkdir = "2.4"
-ink_primitives = "4.3.0"
+ink_primitives = "5.0.0"
 wasm_host_attr = { path = "tests/wasm_host_attr" }
 num-bigint = { version = "0.4", features = ["rand", "serde"]}
 

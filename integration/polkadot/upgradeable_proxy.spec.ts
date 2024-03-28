@@ -19,6 +19,7 @@ describe('Deploy the upgradable proxy and implementations; expect the upgrade me
         let result: any = await transaction(proxy.tx.upgradeToAndCall({ gasLimit }, ...params), aliceKeypair());
 
         let events: DecodedEvent[] = result.contractEvents;
+        console.log(events);
         expect(events.length).toEqual(1);
         expect(events[0].event.identifier).toBe("Upgraded");
         expect(events[0].args.map(a => a.toJSON())[0]).toEqual(params[0].toJSON());

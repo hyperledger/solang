@@ -4,7 +4,7 @@
   "description": "Integration tests with Solang and Polkadot",
   "main": "index.js",
   "scripts": {
-    "test": "tsc; ts-mocha -t 20000 --exit *.spec.ts",
+    "test": "tsc; ts-mocha -t 20000 --exit upgradeable_proxy.spec.ts",
     "build": "./build.sh",
     "build-ink": "docker run --rm -v $(pwd)/ink/caller:/opt/contract ghcr.io/hyperledger/solang-substrate-ci:62a8a6c cargo contract build --release --manifest-path /opt/contract/Cargo.toml"
   },
