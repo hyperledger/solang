@@ -729,6 +729,150 @@ pub(crate) fn eval_constants_in_expression(
                 (None, true)
             }
         }
+        Expression::More {
+            loc,
+            left,
+            right,
+        } => {
+            let left = eval_constants_in_expression(left, diagnostics).0;
+            let right = eval_constants_in_expression(right, diagnostics).0;
+
+            if let (
+                Some(Expression::NumberLiteral { value: left, .. }),
+                Some(Expression::NumberLiteral { value: right, .. }),
+            ) = (&left, &right)
+            {
+                (
+                    Some(Expression::BoolLiteral { 
+                        loc: *loc,
+                        value: left > right
+                    }),
+                    true,
+                )
+            } else {
+                (None, true)
+            }
+        }
+        Expression::Less {
+            loc,
+            left,
+            right,
+        } => {
+            let left = eval_constants_in_expression(left, diagnostics).0;
+            let right = eval_constants_in_expression(right, diagnostics).0;
+
+            if let (
+                Some(Expression::NumberLiteral { value: left, .. }),
+                Some(Expression::NumberLiteral { value: right, .. }),
+            ) = (&left, &right)
+            {
+                (
+                    Some(Expression::BoolLiteral { 
+                        loc: *loc,
+                        value: left < right
+                    }),
+                    true,
+                )
+            } else {
+                (None, true)
+            }
+        }
+        Expression::Equal {
+            loc,
+            left,
+            right,
+        } => {
+            let left = eval_constants_in_expression(left, diagnostics).0;
+            let right = eval_constants_in_expression(right, diagnostics).0;
+
+            if let (
+                Some(Expression::NumberLiteral { value: left, .. }),
+                Some(Expression::NumberLiteral { value: right, .. }),
+            ) = (&left, &right)
+            {
+                (
+                    Some(Expression::BoolLiteral { 
+                        loc: *loc,
+                        value: left == right
+                    }),
+                    true,
+                )
+            } else {
+                (None, true)
+            }
+        }
+        Expression::NotEqual {
+            loc,
+            left,
+            right,
+        } => {
+            let left = eval_constants_in_expression(left, diagnostics).0;
+            let right = eval_constants_in_expression(right, diagnostics).0;
+
+            if let (
+                Some(Expression::NumberLiteral { value: left, .. }),
+                Some(Expression::NumberLiteral { value: right, .. }),
+            ) = (&left, &right)
+            {
+                (
+                    Some(Expression::BoolLiteral { 
+                        loc: *loc,
+                        value: left != right
+                    }),
+                    true,
+                )
+            } else {
+                (None, true)
+            }
+        }
+        Expression::MoreEqual {
+            loc,
+            left,
+            right,
+        } => {
+            let left = eval_constants_in_expression(left, diagnostics).0;
+            let right = eval_constants_in_expression(right, diagnostics).0;
+
+            if let (
+                Some(Expression::NumberLiteral { value: left, .. }),
+                Some(Expression::NumberLiteral { value: right, .. }),
+            ) = (&left, &right)
+            {
+                (
+                    Some(Expression::BoolLiteral { 
+                        loc: *loc,
+                        value: left >= right 
+                    }),
+                    true,
+                )
+            } else {
+                (None, true)
+            }
+        }
+        Expression::LessEqual {
+            loc,
+            left,
+            right,
+        } => {
+            let left = eval_constants_in_expression(left, diagnostics).0;
+            let right = eval_constants_in_expression(right, diagnostics).0;
+
+            if let (
+                Some(Expression::NumberLiteral { value: left, .. }),
+                Some(Expression::NumberLiteral { value: right, .. }),
+            ) = (&left, &right)
+            {
+                (
+                    Some(Expression::BoolLiteral { 
+                        loc: *loc,
+                        value: left <= right 
+                    }),
+                    true,
+                )
+            } else {
+                (None, true)
+            }
+        }
         Expression::ZeroExt { loc, to, expr } => {
             let expr = eval_constants_in_expression(expr, diagnostics).0;
             if let Some(Expression::NumberLiteral { value, .. }) = expr {
