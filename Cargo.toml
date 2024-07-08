@@ -1,6 +1,6 @@
 [package]
 name = "solang"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Sean Young <sean@mess.org>", "Lucas Steuernagel <lucas.tnagel@gmail.com>", "Cyrill Leutwiler <bigcyrill@hotmail.com>"]
 repository = "https://github.com/hyperledger/solang"
 documentation = "https://solang.readthedocs.io/"
@@ -46,7 +46,7 @@ itertools = "0.12"
 num-rational = "0.4"
 indexmap = "2.2"
 once_cell = "1.19"
-solang-parser = { path = "solang-parser", version = "0.3.3" }
+solang-parser = { path = "solang-parser", version = "0.3.4" }
 codespan-reporting = "0.11"
 phf = { version = "0.11", features = ["macros"] }
 rust-lapper = { version = "1.1", optional = true }

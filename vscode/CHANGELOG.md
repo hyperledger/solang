@@ -2,6 +2,17 @@
 
 All notable changes to the "solang" extension will be documented in this file.
 
+## [0.3.4]
+- Language server code completion is fully implemented. [chioni16](https://github.com/chioni16)
+- Fixed a bug in the renaming functionality. [chioni16](https://github.com/chioni16)
+- Fixed common panics. [seanyoung](https://github.com/seanyoung)
+- Improve overloaded function call diagnostics: From Solidity 0.6 onwards,
+  when an overloaded function/event resolves to multiple candidates, this is an error.
+  In earlier versions, the first result is used.
+  So, use the pragma solidity version to decide whether to error or not.
+  [seanyoung](https://github.com/seanyoung)
+- Updated dependencies.
+
 ## [0.3.3]
 
 - The same version of solang should be used by the language server as on the command line,
