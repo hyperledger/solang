@@ -22,6 +22,7 @@ use std::sync;
 const SOROBAN_ENV_INTERFACE_VERSION: u64 = 90194313216;
 pub const PUT_CONTRACT_DATA: &str = "l._";
 pub const GET_CONTRACT_DATA: &str = "l.1";
+pub const LOG_FROM_LINEAR_MEMORY: &str = "x._";
 
 pub struct SorobanTarget;
 
@@ -231,12 +232,23 @@ impl SorobanTarget {
             .i64_type()
             .fn_type(&[ty.into(), ty.into()], false);
 
+        let log_function_ty = binary
+            .context
+            .i64_type()
+            .fn_type(&[ty.into(), ty.into(), ty.into(), ty.into()], false);
+
         binary
             .module
             .add_function(PUT_CONTRACT_DATA, function_ty_1, Some(Linkage::External));
         binary
             .module
             .add_function(GET_CONTRACT_DATA, function_ty, Some(Linkage::External));
+
+        binary.module.add_function(
+            LOG_FROM_LINEAR_MEMORY,
+            log_function_ty,
+            Some(Linkage::External),
+        );
     }
 
     fn emit_initializer(binary: &mut Binary, _ns: &ast::Namespace) {

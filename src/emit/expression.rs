@@ -17,6 +17,8 @@ use inkwell::{AddressSpace, IntPredicate};
 use num_bigint::Sign;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
+use std::ops::Deref;
+use inkwell::types::BasicTypeEnum;
 
 /// The expression function recursively emits code for expressions. The BasicEnumValue it
 /// returns depends on the context; if it is simple integer, bool or bytes32 expression, the value
@@ -1198,6 +1200,7 @@ pub(super) fn expression<'a, T: TargetRuntime<'a> + ?Sized>(
             expr,
             ..
         } => {
+            println!("bytes cast");
             let e = expression(target, bin, expr, vartab, function, ns).into_int_value();
 
             let size = e.get_type().get_bit_width() / 8;
@@ -1538,7 +1541,14 @@ pub(super) fn expression<'a, T: TargetRuntime<'a> + ?Sized>(
             initializer,
             ..
         } => {
-            if matches!(ty, Type::Slice(_)) {
+
+            println!("testing filename: {:?}",  bin.name);
+            println!("alloc dynamic bytes");
+            println!("TYYY {:?}", ty);
+            println!("SIZE {:?}", size);
+            println!("INITIALIZER {:?}", initializer);
+            if matches!(ty, Type::Slice(_))  {
+                println!("ty is slice");
                 let init = initializer.as_ref().unwrap();
 
                 let data = bin.emit_global_string("const_string", init, true);
@@ -1553,7 +1563,88 @@ pub(super) fn expression<'a, T: TargetRuntime<'a> + ?Sized>(
                             .into(),
                     ])
                     .into()
-            } else {
+            }
+            else if let Expression::NumberLiteral{loc, ty, value} = size.clone().deref() {
+            
+            
+            //matches!(size.clone().deref(), Expression::NumberLiteral{loc, ty: sesa, value}) {
+
+                println!("size is number literal");
+                println!("ty {:?}", ty);
+                println!("value {:?}", value);
+
+                if let Some(init) = initializer  {
+                    
+                
+
+                let init = initializer.as_ref().unwrap();
+
+                let data = bin.emit_global_string("const_string", init, true);
+
+
+                let typee = BasicTypeEnum::StructType(
+                    bin.context.struct_type(
+                        &[
+                            bin.llvm_type(ty, ns)
+                                .ptr_type(AddressSpace::default())
+                                .into(),
+                            bin.context
+                                .custom_width_int_type(ns.target.ptr_size().into())
+                                .into(),
+                        ],
+                        false,
+                    ),
+                ).into_struct_type();
+
+                println!("typee {:?}", typee);
+            
+
+
+                    typee.const_named_struct(&[
+                        data.into(),
+                        bin.context
+                            .custom_width_int_type(ns.target.ptr_size().into())
+                            .const_int(init.len() as u64, false)
+                            .into(),
+                    ])
+                    .into()
+                } else {
+
+                    let typee = BasicTypeEnum::StructType(
+                        bin.context.struct_type(
+                            &[
+                                bin.llvm_type(ty, ns)
+                                    .ptr_type(AddressSpace::default())
+                                    .into(),
+                                bin.context
+                                    .custom_width_int_type(ns.target.ptr_size().into())
+                                    .into(),
+                            ],
+                            false,
+                        ),
+                    ).into_struct_type();
+    
+                    println!("typee {:?}", typee);
+                
+
+                    let null = bin.context.custom_width_int_type(ns.target.ptr_size().into()).ptr_type(AddressSpace::default()).const_null();
+    
+    
+                       let nones =  typee.const_named_struct(&[
+                            null.into(),
+                            bin.context
+                                .custom_width_int_type(ns.target.ptr_size().into())
+                                .const_int(0_u64, false)
+                                .into(),
+                        ])
+                        ;
+
+                    null.into()
+                }
+                
+             
+            }
+            else {
                 let elem = match ty {
                     Type::Slice(_) | Type::String | Type::DynamicBytes => Type::Bytes(1),
                     _ => ty.array_elem(),

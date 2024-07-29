@@ -444,7 +444,10 @@ pub(super) fn process_instruction<'a, T: TargetRuntime<'a> + ?Sized>(
             target.assert_failure(bin, vector_bytes, len);
         }
         Instr::Print { expr } => {
+
+            println!("KIND OF EXPR BEFORE{:?}", expr);
             let expr = expression(target, bin, expr, &w.vars, function, ns);
+            println!("KIND OF EXPR AFTER{:?}", expr);
 
             target.print(bin, bin.vector_bytes(expr), bin.vector_len(expr));
         }

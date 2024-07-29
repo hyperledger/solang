@@ -931,6 +931,7 @@ pub fn expression(
             ..
         } => {
             if opt.log_prints {
+                println!("args in codegen {:?}", args);
                 let expr = expression(&args[0], cfg, contract_no, func, ns, vartab, opt);
 
                 let to_print = if ns.target.is_polkadot() {

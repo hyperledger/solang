@@ -25,6 +25,8 @@ fn solana_contracts() -> io::Result<()> {
 
 #[test]
 fn polkadot_contracts() -> io::Result<()> {
+
+    println!("polkadot_contracts heeeeeere");
     contract_tests(
         "tests/contract_testcases/polkadot",
         Target::default_polkadot(),
@@ -67,6 +69,8 @@ fn parse_file(path: PathBuf, target: Target) -> io::Result<()> {
     let mut cache = FileResolver::default();
 
     let filename = add_file(&mut cache, &path, target)?;
+
+    println!("Parsing {}", filename);
 
     let mut ns = parse_and_resolve(OsStr::new(&filename), &mut cache, target);
 

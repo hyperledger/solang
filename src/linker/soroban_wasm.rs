@@ -11,8 +11,7 @@ use wasm_encoder::{
 };
 use wasmparser::{Global, Import, Parser, Payload::*, SectionLimited, TypeRef};
 
-use crate::emit::soroban::GET_CONTRACT_DATA;
-use crate::emit::soroban::PUT_CONTRACT_DATA;
+use crate::emit::soroban::{GET_CONTRACT_DATA, LOG_FROM_LINEAR_MEMORY, PUT_CONTRACT_DATA};
 
 pub fn link(input: &[u8], name: &str) -> Vec<u8> {
     let dir = tempdir().expect("failed to create temp directory for linking");
@@ -82,7 +81,7 @@ fn generate_module(input: &[u8]) -> Vec<u8> {
     module.finish()
 }
 
-/// Resolve all pallet contracts runtime imports
+/// Resolve all soroban contracts runtime imports
 fn generate_import_section(section: SectionLimited<Import>, module: &mut Module) {
     let mut imports = ImportSection::new();
     for import in section.into_iter().map(|import| import.unwrap()) {
@@ -98,6 +97,7 @@ fn generate_import_section(section: SectionLimited<Import>, module: &mut Module)
         };
         let module_name = match import.name {
             GET_CONTRACT_DATA | PUT_CONTRACT_DATA => "l",
+            LOG_FROM_LINEAR_MEMORY => "x",
             _ => panic!("got func {:?}", import),
         };
         // parse the import name to all string after the the first dot

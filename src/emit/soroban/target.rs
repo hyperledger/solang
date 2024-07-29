@@ -2,8 +2,10 @@
 
 use crate::codegen::cfg::HashTy;
 use crate::codegen::Expression;
-use crate::emit::binary::Binary;
-use crate::emit::soroban::{SorobanTarget, GET_CONTRACT_DATA, PUT_CONTRACT_DATA};
+use crate::emit::binary::{self, Binary};
+use crate::emit::soroban::{
+    SorobanTarget, GET_CONTRACT_DATA, LOG_FROM_LINEAR_MEMORY, PUT_CONTRACT_DATA,
+};
 use crate::emit::ContractArgs;
 use crate::emit::{TargetRuntime, Variable};
 use crate::emit_context;
@@ -13,10 +15,11 @@ use crate::sema::ast::{Function, Namespace, Type};
 
 use inkwell::types::{BasicTypeEnum, IntType};
 use inkwell::values::{
-    ArrayValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum, FunctionValue, IntValue,
-    PointerValue,
+    AnyValue, ArrayValue, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum,
+    FunctionValue, IntValue, PointerValue,
 };
 
+use inkwell::AddressSpace;
 use solang_parser::pt::Loc;
 
 use std::collections::HashMap;
@@ -236,7 +239,138 @@ impl<'a> TargetRuntime<'a> for SorobanTarget {
 
     /// Prints a string
     /// TODO: Implement this function, with a call to the `log` function in the Soroban runtime.
-    fn print(&self, bin: &Binary, string: PointerValue, length: IntValue) {}
+    fn print(&self, bin: &Binary, string: PointerValue, length: IntValue) {
+        if string.is_const() && length.is_const() {
+            println!("msg_pos: {:?}", string);
+            println!("length: {:?}", length);
+
+            let msg_pos = bin
+                .builder
+                .build_ptr_to_int(string, bin.context.i64_type(), "msg_pos")
+                .unwrap();
+            let msg_pos = msg_pos.const_cast(bin.context.i64_type(), false);
+
+            println!("msg_pos extracted: {:?}", msg_pos);
+            println!("=============================================================");
+
+            let length = length.const_cast(bin.context.i64_type(), false);
+
+            let eight = bin.context.i64_type().const_int(8, false);
+            let four = bin.context.i64_type().const_int(4, false);
+            let zero = bin.context.i64_type().const_int(0, false);
+            let thirty_two = bin.context.i64_type().const_int(32, false);
+
+            // encode msg_pos and length
+            let msg_pos_encoded = bin
+                .builder
+                .build_left_shift(msg_pos, thirty_two, "temp")
+                .unwrap();
+            let msg_pos_encoded = bin
+                .builder
+                .build_int_add(msg_pos_encoded, four, "msg_pos_encoded")
+                .unwrap();
+
+            let length_encoded = bin
+                .builder
+                .build_left_shift(length, thirty_two, "temp")
+                .unwrap();
+            let length_encoded = bin
+                .builder
+                .build_int_add(length_encoded, four, "length_encoded")
+                .unwrap();
+
+            let zero_encoded = bin.builder.build_left_shift(zero, eight, "temp").unwrap();
+
+            let eight_encoded = bin.builder.build_left_shift(eight, eight, "temp").unwrap();
+            let eight_encoded = bin
+                .builder
+                .build_int_add(eight_encoded, four, "eight_encoded")
+                .unwrap();
+
+            let call_res = bin
+                .builder
+                .build_call(
+                    bin.module.get_function(LOG_FROM_LINEAR_MEMORY).unwrap(),
+                    &[
+                        msg_pos_encoded.into(),
+                        length_encoded.into(),
+                        msg_pos_encoded.into(),
+                        four.into(),
+                    ],
+                    "log",
+                )
+                .unwrap();
+        } else {
+            println!("in else: ");
+
+            println!("msg_pos: {:?}", string);
+            println!("length: {:?}", length);
+
+
+            /*println!("msg_pos: {:?}", string);
+                println!("length: {:?}", length);
+
+                let msg_pos = bin.builder.build_ptr_to_int(string, bin.context.i64_type(), "msg_pos").unwrap();
+                //let msg_pos = msg_pos.const_cast(bin.context.i64_type(), false);
+
+
+
+                println!("msg_pos extracted: {:?}", msg_pos);
+                println!("=============================================================");
+
+                //let length = length.const_cast(bin.context.i64_type(), false);
+
+
+                let eight = bin.context.i64_type().const_int(8, false);
+                let four = bin.context.i64_type().const_int(4, false);
+                let zero = bin.context.i64_type().const_int(0, false);
+                let thirty_two = bin.context.i64_type().const_int(32, false);
+
+                // encode msg_pos and length
+                let msg_pos_encoded = bin.builder.build_left_shift(msg_pos, thirty_two, "temp").unwrap();
+                let msg_pos_encoded = bin.builder.build_int_add(msg_pos_encoded, four, "msg_pos_encoded").unwrap();
+
+                println!("CAN MSG ENCODE");
+
+
+
+                //let length = bin.builder.build_int_z_extend(length, bin.context.i64_type(), "extended").unwrap();
+
+
+                let length_type = length.get_type();
+                println!("LENGTH TYPE: {:?}", length_type);
+
+                //let length = bin.builder.build_int_z_extend(length, bin.context.i64_type(), "extended").unwrap();
+                //let length = bin.builder.build_int_cast(length, bin.context.i64_type(), "extended").unwrap();
+
+                let length_encoded = bin.builder.build_left_shift(length, thirty_two, "temp").unwrap();
+                let length_encoded = bin.builder.build_int_add(length_encoded, four, "length_encoded").unwrap();
+
+                println!("CAN LENGTH ENCODE");
+
+
+                let zero_encoded = bin.builder.build_left_shift(zero, eight, "temp").unwrap();
+
+
+                let eight_encoded = bin.builder.build_left_shift(eight, eight, "temp").unwrap();
+                let eight_encoded = bin.builder.build_int_add(eight_encoded, four, "eight_encoded").unwrap();
+
+
+
+
+                let call_res = bin.builder.build_call(
+                    bin.module.get_function(LOG_FROM_LINEAR_MEMORY).unwrap(),
+                    &[
+                        msg_pos_encoded.into(),
+                        length_encoded.into(),
+                        msg_pos_encoded.into(),
+                        four.into(),
+                    ],
+                    "log",
+                ).unwrap();
+            */
+        }
+    }
 
     /// Return success without any result
     fn return_empty_abi(&self, bin: &Binary) {

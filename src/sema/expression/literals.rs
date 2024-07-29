@@ -26,6 +26,12 @@ pub(super) fn string_literal(
     diagnostics: &mut Diagnostics,
     resolve_to: ResolveTo,
 ) -> Expression {
+
+
+    println!("string_literal: {:?}", v);
+    println!("resolve_to: {:?}", resolve_to);
+
+
     // Concatenate the strings
     let mut result = Vec::new();
     let mut loc = v[0].loc;
@@ -37,7 +43,7 @@ pub(super) fn string_literal(
 
     let length = result.len();
 
-    match resolve_to {
+   let ret =  match resolve_to {
         ResolveTo::Type(Type::String) => Expression::AllocDynamicBytes {
             loc,
             ty: Type::String,
@@ -65,7 +71,10 @@ pub(super) fn string_literal(
             ty: Type::Bytes(length as u8),
             value: result,
         },
-    }
+    };
+
+    println!("ret: {:?}", ret);
+    ret
 }
 
 pub(super) fn hex_literal(
