@@ -28,11 +28,11 @@ Option 2: Download binaries
 
 There are binaries available on github releases:
 
-- `Linux x86-64 <https://github.com/hyperledger/solang/releases/download/v0.3.3/solang-linux-x86-64>`_
-- `Linux arm64 <https://github.com/hyperledger/solang/releases/download/v0.3.3/solang-linux-arm64>`_
-- `Windows x64 <https://github.com/hyperledger/solang/releases/download/v0.3.3/solang.exe>`_
-- `MacOS intel <https://github.com/hyperledger/solang/releases/download/v0.3.3/solang-mac-intel>`_
-- `MacOS arm <https://github.com/hyperledger/solang/releases/download/v0.3.3/solang-mac-arm>`_
+- `Linux x86-64 <https://github.com/hyperledger/solang/releases/download/v0.3.4/solang-linux-x86-64>`_
+- `Linux arm64 <https://github.com/hyperledger/solang/releases/download/v0.3.4/solang-linux-arm64>`_
+- `Windows x64 <https://github.com/hyperledger/solang/releases/download/v0.3.4/solang.exe>`_
+- `MacOS intel <https://github.com/hyperledger/solang/releases/download/v0.3.4/solang-mac-intel>`_
+- `MacOS arm <https://github.com/hyperledger/solang/releases/download/v0.3.4/solang-mac-arm>`_
 
 Download the file and save it somewhere in your ``$PATH``, for example the bin directory in your home directory. If the
 path you use is not already in ``$PATH``, then you need to add it yourself.
@@ -56,7 +56,7 @@ Option 3: Use ghcr.io/hyperledger/solang containers
 
 New images are automatically made available on
 `solang containers <https://github.com/hyperledger/solang/pkgs/container/solang>`_.
-There is a release `v0.3.3` tag and a `latest` tag:
+There is a release `v0.3.4` tag and a `latest` tag:
 
 .. code-block:: bash
 
