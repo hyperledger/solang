@@ -15,6 +15,7 @@ use super::{
 };
 use crate::sema::expression::resolve_expression::expression;
 use crate::sema::namespace::ResolveTypeContext;
+use crate::Target;
 use solang_parser::{
     doccomment::DocComment,
     pt::{self, CodeLocation, OptionalCodeLocation},
@@ -136,6 +137,7 @@ pub fn variable_decl<'a>(
     let mut visibility: Option<pt::Visibility> = None;
     let mut has_immutable: Option<pt::Loc> = None;
     let mut is_override: Option<(pt::Loc, Vec<usize>)> = None;
+    let mut storage_type: Option<pt::StorageType> = None;
 
     for attr in attrs {
         match &attr {
@@ -233,7 +235,40 @@ pub fn variable_decl<'a>(
 
                 visibility = Some(v.clone());
             }
+            pt::VariableAttribute::StorageType(s) => {
+                if storage_type.is_some() {
+                    ns.diagnostics.push(Diagnostic::error(
+                        attr.loc(),
+                        format!(
+                            "mutliple storage type specifiers for '{}'",
+                            def.name.as_ref().unwrap().name
+                        ),
+                    ));
+                } else {
+                    storage_type = Some(s.clone());
+                }
+            }
         }
+    }
+
+    if ns.target == Target::Soroban {
+        if storage_type.is_none() {
+            ns.diagnostics.push(Diagnostic::warning(
+                def.loc,
+                format!(
+                    "storage type not specified for `{}`, defaulting to `persistent`",
+                    def.name.as_ref().unwrap().name
+                ),
+            ));
+        }
+    } else if storage_type.is_some() {
+        ns.diagnostics.push(Diagnostic::warning(
+            def.loc,
+            format!(
+                "variable `{}`: storage types are only valid for Soroban targets",
+                def.name.as_ref().unwrap().name
+            ),
+        ));
     }
 
     if let Some(loc) = &has_immutable {
@@ -392,6 +427,7 @@ pub fn variable_decl<'a>(
         assigned: def.initializer.is_some(),
         initializer,
         read: matches!(visibility, pt::Visibility::Public(_)),
+        storage_type,
     };
 
     let var_no = if let Some(contract_no) = contract_no {

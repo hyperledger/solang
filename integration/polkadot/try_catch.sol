@@ -2,9 +2,9 @@ contract TryCatchCaller {
     constructor() payable {}
 
     function test(uint128 div) public payable returns (uint128) {
-        TryCatchCallee instance = new TryCatchCallee();
+        TryCatchCallee contract_instance = new TryCatchCallee();
 
-        try instance.test(div) returns (uint128) {
+        try contract_instance.test(div) returns (uint128) {
             return 4;
         } catch Error(string reason) {
             assert(reason == "foo");

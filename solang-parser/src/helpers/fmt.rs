@@ -4,7 +4,7 @@
 //!
 //! [ref]: https://docs.soliditylang.org/en/latest/style-guide.html
 
-use crate::pt;
+use crate::pt::{self, StorageType};
 use std::{
     borrow::Cow,
     fmt::{Display, Formatter, Result, Write},
@@ -1169,6 +1169,11 @@ impl Display for pt::VariableAttribute {
                 }
                 Ok(())
             }
+            Self::StorageType(storage) => match storage {
+                StorageType::Instance(_) => f.write_str("instance"),
+                StorageType::Temporary(_) => f.write_str("temporary"),
+                StorageType::Persistent(_) => f.write_str("persistent"),
+            },
         }
     }
 }

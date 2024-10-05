@@ -70,6 +70,7 @@ pub enum Instr {
         res: usize,
         ty: Type,
         storage: Expression,
+        storage_type: Option<pt::StorageType>,
     },
     /// Clear storage at slot for ty (might span multiple slots)
     ClearStorage { ty: Type, storage: Expression },
@@ -78,6 +79,7 @@ pub enum Instr {
         ty: Type,
         value: Expression,
         storage: Expression,
+        storage_type: Option<pt::StorageType>,
     },
     /// In storage slot, set the value at the offset
     SetStorageBytes {
@@ -1027,7 +1029,7 @@ impl ControlFlowGraph {
                 true_block,
                 false_block,
             ),
-            Instr::LoadStorage { ty, res, storage } => format!(
+            Instr::LoadStorage { ty, res, storage, .. } => format!(
                 "%{} = load storage slot({}) ty:{}",
                 self.vars[res].id.name,
                 self.expr_to_string(contract, ns, storage),
@@ -1038,7 +1040,7 @@ impl ControlFlowGraph {
                 self.expr_to_string(contract, ns, storage),
                 ty.to_string(ns),
             ),
-            Instr::SetStorage { ty, value, storage } => format!(
+            Instr::SetStorage { ty, value, storage, .. } => format!(
                 "store storage slot({}) ty:{} = {}",
                 self.expr_to_string(contract, ns, storage),
                 ty.to_string(ns),

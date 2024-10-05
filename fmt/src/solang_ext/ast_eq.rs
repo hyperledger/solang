@@ -75,6 +75,17 @@ impl AstEq for VariableDefinition {
     }
 }
 
+impl AstEq for StorageType {
+    fn ast_eq(&self, other: &Self) -> bool {
+        matches!(
+            (self, other),
+            (StorageType::Instance(_), StorageType::Instance(_))
+                | (StorageType::Persistent(_), StorageType::Persistent(_))
+                | (StorageType::Temporary(_), StorageType::Temporary(_))
+        )
+    }
+}
+
 impl AstEq for FunctionDefinition {
     fn ast_eq(&self, other: &Self) -> bool {
         // attributes
@@ -726,5 +737,6 @@ derive_ast_eq! { enum VariableAttribute {
     Constant(loc),
     Immutable(loc),
     Override(loc, idents),
+    StorageType(s)
     _
 }}

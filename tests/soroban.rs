@@ -5,6 +5,7 @@ pub mod soroban_testcases;
 
 use solang::codegen::Options;
 use solang::file_resolver::FileResolver;
+use solang::sema::diagnostics::Diagnostics;
 use solang::{compile, Target};
 use soroban_sdk::testutils::Logs;
 use soroban_sdk::{vec, Address, Env, Symbol, Val};
@@ -14,6 +15,7 @@ use std::ffi::OsStr;
 pub struct SorobanEnv {
     env: Env,
     contracts: Vec<Address>,
+    compiler_diagnostics: Diagnostics,
 }
 
 pub fn build_solidity(src: &str) -> SorobanEnv {
@@ -41,7 +43,7 @@ pub fn build_solidity(src: &str) -> SorobanEnv {
     ns.print_diagnostics_in_plain(&cache, false);
     assert!(!wasm.is_empty());
     let wasm_blob = wasm[0].0.clone();
-    SorobanEnv::new_with_contract(wasm_blob)
+    SorobanEnv::new_with_contract(wasm_blob).insert_diagnostics(ns.diagnostics)
 }
 
 impl SorobanEnv {
@@ -49,7 +51,13 @@ impl SorobanEnv {
         Self {
             env: Env::default(),
             contracts: Vec::new(),
+            compiler_diagnostics: Diagnostics::default(),
         }
+    }
+
+    pub fn insert_diagnostics(mut self, diagnostics: Diagnostics) -> Self {
+        self.compiler_diagnostics = diagnostics;
+        self
     }
 
     pub fn new_with_contract(contract_wasm: Vec<u8>) -> Self {

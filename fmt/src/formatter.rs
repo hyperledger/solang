@@ -20,7 +20,7 @@ use crate::{
 };
 use alloy_primitives::Address;
 use itertools::{Either, Itertools};
-use solang_parser::pt::{PragmaDirective, VersionComparator};
+use solang_parser::pt::{PragmaDirective, StorageType, VersionComparator};
 use std::{fmt::Write, str::FromStr};
 use thiserror::Error;
 
@@ -3333,6 +3333,11 @@ impl<'a, W: Write> Visitor for Formatter<'a, W> {
                 self.visit_list("", idents, Some(loc.start()), Some(loc.end()), false)?;
                 None
             }
+            VariableAttribute::StorageType(s) => match s {
+                StorageType::Instance(_) => Some("instance".to_string()),
+                StorageType::Temporary(_) => Some("temporary".to_string()),
+                StorageType::Persistent(_) => Some("persistent".to_string()),
+            },
         };
         if let Some(token) = token {
             let loc = attribute.loc();

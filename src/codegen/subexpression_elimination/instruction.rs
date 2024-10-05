@@ -267,10 +267,16 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 expr: self.regenerate_expression(expr, ave, cst).1,
             },
 
-            Instr::LoadStorage { res, ty, storage } => Instr::LoadStorage {
+            Instr::LoadStorage {
+                res,
+                ty,
+                storage,
+                storage_type,
+            } => Instr::LoadStorage {
                 res: *res,
                 ty: ty.clone(),
                 storage: self.regenerate_expression(storage, ave, cst).1,
+                storage_type: storage_type.clone(),
             },
 
             Instr::ClearStorage { ty, storage } => Instr::ClearStorage {
@@ -278,10 +284,16 @@ impl<'a, 'b: 'a> AvailableExpressionSet<'a> {
                 storage: self.regenerate_expression(storage, ave, cst).1,
             },
 
-            Instr::SetStorage { ty, value, storage } => Instr::SetStorage {
+            Instr::SetStorage {
+                ty,
+                value,
+                storage,
+                storage_type,
+            } => Instr::SetStorage {
                 ty: ty.clone(),
                 value: self.regenerate_expression(value, ave, cst).1,
                 storage: self.regenerate_expression(storage, ave, cst).1,
+                storage_type: storage_type.clone(),
             },
 
             Instr::SetStorageBytes {

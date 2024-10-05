@@ -28,6 +28,14 @@ impl OptionalCodeLocation for pt::Visibility {
     }
 }
 
+impl OptionalCodeLocation for pt::StorageType {
+    fn loc_opt(&self) -> Option<Loc> {
+        match self {
+            Self::Persistent(l) | Self::Temporary(l) | Self::Instance(l) => *l,
+        }
+    }
+}
+
 impl OptionalCodeLocation for pt::SourceUnit {
     #[inline]
     fn loc_opt(&self) -> Option<Loc> {
@@ -431,6 +439,7 @@ impl_for_enums! {
 
     pt::VariableAttribute: match self {
         Self::Visibility(ref l, ..) => l.loc_opt().unwrap_or_default(),
+        Self::StorageType(ref l, ..) => l.loc_opt().unwrap_or_default(),
         Self::Constant(l, ..)
         | Self::Immutable(l, ..)
         | Self::Override(l, ..) => l,

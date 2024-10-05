@@ -488,7 +488,9 @@ pub fn dead_storage(cfg: &mut ControlFlowGraph, _ns: &mut Namespace) {
             let vars = &block_vars[&block_no][instr_no];
 
             match &cfg.blocks[block_no].instr[instr_no] {
-                Instr::LoadStorage { res, ty, storage } => {
+                Instr::LoadStorage {
+                    res, ty, storage, ..
+                } => {
                     // is there a definition which has the same storage expression
                     let mut found = None;
 

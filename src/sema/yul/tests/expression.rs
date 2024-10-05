@@ -370,6 +370,7 @@ fn resolve_variable_contract() {
         initializer: None,
         assigned: false,
         read: false,
+        storage_type: None,
     });
     contract.variables.push(Variable {
         tags: vec![],
@@ -382,6 +383,7 @@ fn resolve_variable_contract() {
         initializer: None,
         assigned: false,
         read: false,
+        storage_type: None,
     });
 
     contract.variables.push(Variable {
@@ -395,6 +397,7 @@ fn resolve_variable_contract() {
         initializer: None,
         assigned: false,
         read: false,
+        storage_type: None,
     });
 
     ns.contracts.push(contract);
@@ -410,6 +413,7 @@ fn resolve_variable_contract() {
         initializer: None,
         assigned: false,
         read: false,
+        storage_type: None,
     });
 
     ns.variable_symbols.insert(
@@ -921,6 +925,7 @@ fn test_member_access() {
         initializer: None,
         assigned: false,
         read: false,
+        storage_type: None,
     });
 
     ns.contracts.push(contract);
@@ -1043,6 +1048,7 @@ fn test_check_types() {
         initializer: None,
         assigned: false,
         read: false,
+        storage_type: None,
     });
     ns.contracts.push(contract);
     let mut symtable = Symtable::default();

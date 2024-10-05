@@ -7,9 +7,9 @@
       "mocha": "^10.4.0"
     },
     "scripts": {
-      "build": "solang compile *.sol --target soroban",
+      "build": "solang compile *.sol --target soroban && solang compile storage_types.sol --target soroban --release",
       "setup": "node setup.js",
-      "test": "mocha *.spec.js --timeout 20000"
+      "test": "mocha *.spec.js --timeout 100000"
     },
     "devDependencies": {
       "@eslint/js": "^9.4.0",

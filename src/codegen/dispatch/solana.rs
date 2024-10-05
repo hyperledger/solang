@@ -491,6 +491,7 @@ fn check_magic(magic_value: u32, cfg: &mut ControlFlowGraph, vartab: &mut Vartab
                 ty: Type::Uint(32),
                 value: 0.into(),
             },
+            storage_type: None,
         },
     );
 

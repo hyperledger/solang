@@ -1015,6 +1015,8 @@ impl<'a> Binary<'a> {
                 Type::FunctionSelector => {
                     self.llvm_type(&Type::Bytes(ns.target.selector_length()), ns)
                 }
+                // Soroban functions always return a 64 bit value.
+                Type::Void => BasicTypeEnum::IntType(self.context.i64_type()),
                 _ => unreachable!(),
             }
         }

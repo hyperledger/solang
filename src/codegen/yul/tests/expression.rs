@@ -133,6 +133,7 @@ fn contract_constant_variable() {
         }),
         assigned: false,
         read: false,
+        storage_type: None,
     };
 
     let contract = Contract {
@@ -198,6 +199,7 @@ fn global_constant_variable() {
         }),
         assigned: false,
         read: false,
+        storage_type: None,
     };
     ns.constants.push(var);
     let expr = ast::YulExpression::ConstantVariable(loc, Type::Uint(64), None, 0);

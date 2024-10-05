@@ -222,14 +222,14 @@ contract c1 {
 
 // BEGIN-CHECK: c1::function::test9
     function test9(int a, int b) public view returns (int ret) {
-        stTest instance = stTest(2, 3);
+        stTest struct_instance = stTest(2, 3);
         // CHECK:  ty:int256 %1.cse_temp = ((arg #0) + (arg #1))
-        int x = a + b + instance.a;
-        // CHECK: ty:int256 %x = (%1.cse_temp + (load (struct %instance field 0)))
-        // CHECK: branchcond (signed less (%x + int256((load (struct %instance field 1)))) < int256 0)
-        if(x  + int(instance.b) < 0) {
-            // CHECK: ty:uint256 %p = uint256((%1.cse_temp + (load (struct %instance field 0))))
-            uint p = uint(a+b+instance.a);
+        int x = a + b + struct_instance.a;
+        // CHECK: ty:int256 %x = (%1.cse_temp + (load (struct %struct_instance field 0)))
+        // CHECK: branchcond (signed less (%x + int256((load (struct %struct_instance field 1)))) < int256 0)
+        if(x  + int(struct_instance.b) < 0) {
+            // CHECK: ty:uint256 %p = uint256((%1.cse_temp + (load (struct %struct_instance field 0))))
+            uint p = uint(a+b+struct_instance.a);
             bool e = p > 50;
         }
 

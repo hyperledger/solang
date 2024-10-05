@@ -179,6 +179,11 @@ pub enum Token<'input> {
     Default,
     YulArrow,
 
+    // Storage types for Soroban
+    Persistent,
+    Temporary,
+    Instance,
+
     Annotation(&'input str),
 }
 
@@ -316,6 +321,9 @@ impl<'input> fmt::Display for Token<'input> {
             Token::Default => write!(f, "default"),
             Token::YulArrow => write!(f, "->"),
             Token::Annotation(name) => write!(f, "@{name}"),
+            Token::Persistent => write!(f, "persistent"),
+            Token::Temporary => write!(f, "temporary"),
+            Token::Instance => write!(f, "instance"),
         }
     }
 }
@@ -553,6 +561,9 @@ static KEYWORDS: phf::Map<&'static str, Token> = phf_map! {
     "unchecked" => Token::Unchecked,
     "assembly" => Token::Assembly,
     "let" => Token::Let,
+    "persistent" => Token::Persistent,
+    "temporary" => Token::Temporary,
+    "instance" => Token::Instance,
 };
 
 impl<'input> Lexer<'input> {

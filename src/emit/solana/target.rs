@@ -14,7 +14,7 @@ use inkwell::values::{
 };
 use inkwell::{AddressSpace, IntPredicate};
 use num_traits::ToPrimitive;
-use solang_parser::pt::Loc;
+use solang_parser::pt::{Loc, StorageType};
 use std::collections::HashMap;
 
 impl<'a> TargetRuntime<'a> for SolanaTarget {
@@ -440,7 +440,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
             .unwrap();
 
         if let Some(val) = val {
-            self.storage_store(binary, ty, false, &mut new_offset, val, function, ns);
+            self.storage_store(binary, ty, false, &mut new_offset, val, function, ns, &None);
         }
 
         if ty.is_reference_type(ns) {
@@ -545,7 +545,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
             .unwrap();
 
         let val = if load {
-            Some(self.storage_load(binary, ty, &mut old_elem_offset, function, ns))
+            Some(self.storage_load(binary, ty, &mut old_elem_offset, function, ns, &None))
         } else {
             None
         };
@@ -639,6 +639,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
         slot: &mut IntValue<'a>,
         function: FunctionValue<'a>,
         ns: &ast::Namespace,
+        _storage_type: &Option<StorageType>,
     ) -> BasicValueEnum<'a> {
         let data = self.contract_storage_data(binary);
 
@@ -733,7 +734,8 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
                         )
                         .unwrap();
 
-                    let val = self.storage_load(binary, &field.ty, &mut offset, function, ns);
+                    let val =
+                        self.storage_load(binary, &field.ty, &mut offset, function, ns, &None);
 
                     let elem = unsafe {
                         binary
@@ -849,6 +851,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
                     &mut offset_val,
                     function,
                     ns,
+                    &None,
                 );
 
                 let val = if elem_ty.deref_memory().is_fixed_reference_type(ns) {
@@ -896,6 +899,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
         val: BasicValueEnum<'a>,
         function: FunctionValue<'a>,
         ns: &ast::Namespace,
+        _: &Option<StorageType>,
     ) {
         let data = self.contract_storage_data(binary);
         let account = self.contract_storage_account(binary);
@@ -1221,6 +1225,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
                 },
                 function,
                 ns,
+                &None,
             );
 
             offset_val = binary
@@ -1296,6 +1301,7 @@ impl<'a> TargetRuntime<'a> for SolanaTarget {
                     },
                     function,
                     ns,
+                    &None,
                 );
             }
         } else {

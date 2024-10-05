@@ -1002,6 +1002,7 @@ fn try_load_and_cast(
                     res: anonymous_no,
                     ty: (*ty).clone(),
                     storage: expr.cast(to_ty, ns),
+                    storage_type: None,
                 },
             );
 

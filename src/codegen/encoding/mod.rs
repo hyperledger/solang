@@ -1422,7 +1422,7 @@ pub(crate) trait AbiEncoding {
                 self.get_expr_size(arg_no, &loaded, ns, vartab, cfg)
             }
             Type::StorageRef(_, r) => {
-                let var = load_storage(&Codegen, r, expr.clone(), cfg, vartab);
+                let var = load_storage(&Codegen, r, expr.clone(), cfg, vartab, None);
                 let size = self.get_expr_size(arg_no, &var, ns, vartab, cfg);
                 self.storage_cache_insert(arg_no, var.clone());
                 size

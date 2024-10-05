@@ -359,8 +359,15 @@ Visibility: Visibility = {
     <l:@L> "private" <r:@R> => Visibility::Private(Some(Loc::File(file_no, l, r))),
 }
 
+StorageType: StorageType = {
+    <l:@L> "persistent" <r:@R> => StorageType::Persistent(Some(Loc::File(file_no, l, r))),
+    <l:@R> "temporary" <r:@R> => StorageType::Temporary(Some(Loc::File(file_no, l, r))),
+    <l:@R> "instance" <r:@R> => StorageType::Instance(Some(Loc::File(file_no, l, r))),
+}
+
 VariableAttribute: VariableAttribute = {
     Visibility => VariableAttribute::Visibility(<>),
+    StorageType => VariableAttribute::StorageType(<>),
     <l:@L> "constant" <r:@R> => VariableAttribute::Constant(Loc::File(file_no, l, r)),
     <l:@L> "immutable" <r:@R> => VariableAttribute::Immutable(Loc::File(file_no, l, r)),
     <l:@L> "override" <r:@R> => VariableAttribute::Override(Loc::File(file_no, l, r), Vec::new()),
@@ -1312,5 +1319,8 @@ extern {
         "switch" => Token::Switch,
         "case" => Token::Case,
         "default" => Token::Default,
+        "persistent" => Token::Persistent,
+        "temporary" => Token::Temporary,
+        "instance" => Token::Instance,
     }
 }

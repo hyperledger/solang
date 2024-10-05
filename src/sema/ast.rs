@@ -590,6 +590,7 @@ pub struct Variable {
     pub initializer: Option<Expression>,
     pub assigned: bool,
     pub read: bool,
+    pub storage_type: Option<pt::StorageType>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

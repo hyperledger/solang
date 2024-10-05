@@ -284,6 +284,7 @@ fn storage_initializer(contract_no: usize, ns: &mut Namespace, opt: &Options) ->
                     value,
                     ty: var.ty.clone(),
                     storage,
+                    storage_type: var.storage_type.clone(),
                 },
             );
         }

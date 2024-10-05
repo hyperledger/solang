@@ -12,7 +12,7 @@ use inkwell::types::{BasicTypeEnum, IntType};
 use inkwell::values::{
     ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue,
 };
-use solang_parser::pt::Loc;
+use solang_parser::pt::{Loc, StorageType};
 
 pub mod binary;
 mod cfg;
@@ -85,6 +85,7 @@ pub trait TargetRuntime<'a> {
         slot: &mut IntValue<'a>,
         function: FunctionValue<'a>,
         ns: &ast::Namespace,
+        storage_type: &Option<StorageType>,
     ) -> BasicValueEnum<'a>;
 
     /// Recursively store a type to storage
@@ -97,6 +98,7 @@ pub trait TargetRuntime<'a> {
         dest: BasicValueEnum<'a>,
         function: FunctionValue<'a>,
         ns: &ast::Namespace,
+        storage_type: &Option<StorageType>,
     );
 
     /// Recursively clear storage. The default implementation is for slot-based storage

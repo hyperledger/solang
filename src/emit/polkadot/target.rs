@@ -17,7 +17,7 @@ use inkwell::values::{
     ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, IntValue, PointerValue,
 };
 use inkwell::{AddressSpace, IntPredicate};
-use solang_parser::pt::Loc;
+use solang_parser::pt::{Loc, StorageType};
 use std::collections::HashMap;
 
 impl<'a> TargetRuntime<'a> for PolkadotTarget {
@@ -1574,6 +1574,7 @@ impl<'a> TargetRuntime<'a> for PolkadotTarget {
         slot: &mut IntValue<'a>,
         function: FunctionValue,
         ns: &Namespace,
+        _storage_type: &Option<StorageType>,
     ) -> BasicValueEnum<'a> {
         // The storage slot is an i256 accessed through a pointer, so we need
         // to store it
@@ -1594,6 +1595,7 @@ impl<'a> TargetRuntime<'a> for PolkadotTarget {
         dest: BasicValueEnum<'a>,
         function: FunctionValue<'a>,
         ns: &Namespace,
+        _: &Option<StorageType>,
     ) {
         let slot_ptr = binary
             .builder

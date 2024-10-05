@@ -112,23 +112,33 @@ pub(super) fn process_instruction<'a, T: TargetRuntime<'a> + ?Sized>(
                 .build_conditional_branch(cond.into_int_value(), bb_true, bb_false)
                 .unwrap();
         }
-        Instr::LoadStorage { res, ty, storage } => {
+        Instr::LoadStorage {
+            res,
+            ty,
+            storage,
+            storage_type,
+        } => {
             let mut slot = expression(target, bin, storage, &w.vars, function, ns).into_int_value();
 
             w.vars.get_mut(res).unwrap().value =
-                target.storage_load(bin, ty, &mut slot, function, ns);
+                target.storage_load(bin, ty, &mut slot, function, ns, storage_type);
         }
         Instr::ClearStorage { ty, storage } => {
             let mut slot = expression(target, bin, storage, &w.vars, function, ns).into_int_value();
 
             target.storage_delete(bin, ty, &mut slot, function, ns);
         }
-        Instr::SetStorage { ty, value, storage } => {
+        Instr::SetStorage {
+            ty,
+            value,
+            storage,
+            storage_type,
+        } => {
             let value = expression(target, bin, value, &w.vars, function, ns);
 
             let mut slot = expression(target, bin, storage, &w.vars, function, ns).into_int_value();
 
-            target.storage_store(bin, ty, true, &mut slot, value, function, ns);
+            target.storage_store(bin, ty, true, &mut slot, value, function, ns, storage_type);
         }
         Instr::SetStorageBytes {
             storage,
