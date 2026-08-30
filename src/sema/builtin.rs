@@ -1413,6 +1413,15 @@ pub(super) fn resolve_namespace_call(
             return Err(());
         }
 
+        if matches!(ty, Type::Rational) {
+            diagnostics.push(Diagnostic::error(
+                arg.loc(),
+                "rational expression has no concrete type, cast to an integer type before encoding"
+                    .to_string(),
+            ));
+            return Err(());
+        }
+
         expr = expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics)?;
 
         // A string or hex literal should be encoded as a string
