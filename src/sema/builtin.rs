@@ -1413,6 +1413,14 @@ pub(super) fn resolve_namespace_call(
             return Err(());
         }
 
+        if matches!(ty, Type::InternalFunction { .. }) {
+            diagnostics.push(Diagnostic::error(
+                arg.loc(),
+                "internal function references cannot be abi encoded".to_string(),
+            ));
+            return Err(());
+        }
+
         expr = expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics)?;
 
         // A string or hex literal should be encoded as a string
