@@ -1404,6 +1404,14 @@ pub(super) fn resolve_namespace_call(
         let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
         let ty = expr.ty();
 
+        if expr.tys().len() == 1 && expr.tys()[0] == Type::Void {
+            diagnostics.push(Diagnostic::error(
+                arg.loc(),
+                "cannot pass a void expression as an abi.encode* argument".to_string(),
+            ));
+            return Err(());
+        }
+
         if ty.is_mapping() || ty.is_recursive(ns) {
             diagnostics.push(Diagnostic::error(
                 arg.loc(),
