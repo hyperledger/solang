@@ -89,7 +89,7 @@ Option 5: Build Solang from source
 
 In order to build Solang from source, you will need:
 
-* Rust version 1.90.0 or higher
+* Rust version 1.91.0 or higher
 * A C++ compiler with support for C++17
 * A build of LLVM based on the Solana LLVM tree. There are a few LLVM patches required that are not upstream yet.
 

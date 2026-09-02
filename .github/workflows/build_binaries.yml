@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.91.0
       - name: Build
         run: cargo build --verbose --release
       - name: Test
@@ -43,7 +43,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y gcc g++ make
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.91.0
       - run: curl -sSL --output llvm16.0-linux-arm64.tar.xz https://github.com/hyperledger-solang/solang-llvm/releases/download/llvm16-0/llvm16.0-linux-arm64.tar.xz
       - run: tar Jxf llvm16.0-linux-arm64.tar.xz
       - run: echo "$(pwd)/llvm16.0/bin" >> $GITHUB_PATH
@@ -67,7 +67,7 @@ jobs:
       - run: curl -sSL -o c:\llvm.zip https://github.com/hyperledger-solang/solang-llvm/releases/download/llvm16-0/llvm16.0-win.zip
       - run: unzip c:\llvm.zip -d c:/
       - run: echo "c:\llvm16.0\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.91.0
         with:
           components: clippy
       - run: cargo build --release --verbose
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.91.0
       - run: curl -sSL --output llvm16.0-mac-arm.tar.xz https://github.com/hyperledger-solang/solang-llvm/releases/download/llvm16-0/llvm16.0-mac-arm.tar.xz
       - run: tar Jxf llvm16.0-mac-arm.tar.xz
       - run: echo "$(pwd)/llvm16.0/bin" >> $GITHUB_PATH
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@1.90.0
+      - uses: dtolnay/rust-toolchain@1.91.0
       - run: wget -q -O llvm16.0-mac-intel.tar.xz https://github.com/hyperledger-solang/solang-llvm/releases/download/llvm16-0/llvm16.0-mac-intel.tar.xz
       - run: tar Jxf llvm16.0-mac-intel.tar.xz
       - run: echo "$(pwd)/llvm16.0/bin" >> $GITHUB_PATH

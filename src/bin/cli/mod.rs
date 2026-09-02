@@ -46,6 +46,21 @@ pub enum Commands {
 
     #[command(about = "Create a new Solang project")]
     New(New),
+
+    #[command(about = "Analyze an emitted Soroban wasm (or a .sol source) using sordec")]
+    Analyze(AnalyzeCommand),
+}
+
+#[derive(Args)]
+pub struct AnalyzeCommand {
+    #[arg(
+        name = "INPUT",
+        help = "A Soroban `.wasm` to analyze, or a `.sol` source to compile and analyze",
+        required = true,
+        value_parser = ValueParser::path_buf(),
+        num_args = 1
+    )]
+    pub input: PathBuf,
 }
 
 #[derive(Args)]

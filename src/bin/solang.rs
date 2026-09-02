@@ -27,6 +27,7 @@ use crate::cli::{
     ShellComplete,
 };
 
+mod analyze;
 mod cli;
 mod doc;
 mod idl;
@@ -63,6 +64,7 @@ fn main() {
         Commands::LanguageServer(server_args) => languageserver::start_server(&server_args),
         Commands::Idl(idl_args) => idl::idl(&idl_args),
         Commands::New(new_arg) => new_command(new_arg),
+        Commands::Analyze(analyze_args) => analyze::analyze(&analyze_args),
     }
 }
 

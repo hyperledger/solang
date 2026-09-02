@@ -8,7 +8,7 @@ license = "Apache-2.0"
 build = "build.rs"
 description = "Solang Solidity Compiler"
 keywords = [ "solidity", "compiler", "solana", "polkadot", "substrate" ]
-rust-version = "1.90.0"
+rust-version = "1.91.0"
 edition = "2021"
 exclude = [ "/.*", "/docs", "/solana-library", "/tests", "/integration", "/vscode", "/testdata" ]
 
@@ -16,6 +16,7 @@ exclude = [ "/.*", "/docs", "/solana-library", "/tests", "/integration", "/vscod
 cc = "1.0"
 
 [dependencies]
+sordec-driver = { git = "https://github.com/Imran-S-heikh/sordec", rev = "32a282d7d1d9378acb473b59c36c39fc62699350" }
 regex = "1"
 rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"]}
