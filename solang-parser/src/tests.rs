@@ -1349,3 +1349,43 @@ fn loc_union() {
     second.union(&other_first);
     assert_eq!(second, Loc::File(1, 4, 24));
 }
+
+/// `persistent`, `temporary`, and `instance` are valid identifiers in
+/// standard Solidity (non-Soroban).  Regression test for
+/// https://github.com/hyperledger-solang/solang/issues/1847
+#[test]
+fn soroban_keywords_as_identifiers() {
+    // Each of the three words must be usable as a variable name when not
+    // targeting Soroban.
+    let cases = [
+        "contract C { uint256 persistent = 1; }",
+        "contract C { uint256 temporary = 2; }",
+        "contract C { uint256 instance  = 3; }",
+        "contract C { function persistent() public {} }",
+        "contract C { function temporary() public {} }",
+        "contract C { function instance()  public {} }",
+    ];
+    for src in &cases {
+        assert!(
+            crate::parse(src, 0).is_ok(),
+            "standard Solidity parse failed for: {src}"
+        );
+    }
+}
+
+/// `persistent`, `temporary`, and `instance` must still be recognised as
+/// storage-type keywords when `parse_soroban` is used.
+#[test]
+fn soroban_keywords_in_soroban_mode() {
+    let src = r#"
+contract C {
+    uint64 public persistent  x = 1;
+    uint64 public temporary   y = 2;
+    uint64 public instance    z = 3;
+}
+"#;
+    assert!(
+        crate::parse_soroban(src, 0).is_ok(),
+        "Soroban parse failed for storage-type keywords"
+    );
+}

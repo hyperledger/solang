@@ -361,6 +361,10 @@ pub struct Lexer<'input> {
     last_tokens: [Option<Token<'input>>; 2],
     /// The mutable reference to the error vector.
     pub errors: &'input mut Vec<LexicalError>,
+    /// When true, `persistent`, `temporary`, and `instance` are lexed as
+    /// keywords (Soroban storage types). When false, they are treated as
+    /// regular identifiers to preserve compatibility with standard Solidity.
+    soroban: bool,
 }
 
 /// An error thrown by [Lexer].
@@ -593,7 +597,17 @@ impl<'input> Lexer<'input> {
             parse_semver: false,
             last_tokens: [None, None],
             errors,
+            soroban: false,
         }
+    }
+
+    /// Enable Soroban-specific storage type keywords (`persistent`, `temporary`,
+    /// `instance`). By default these are treated as plain identifiers so that
+    /// standard Solidity code that uses these words as identifiers continues to
+    /// parse correctly.
+    pub fn with_soroban_keywords(mut self) -> Self {
+        self.soroban = true;
+        self
     }
 
     fn parse_number(&mut self, mut start: usize, ch: char) -> Result<'input> {
@@ -860,7 +874,18 @@ impl<'input> Lexer<'input> {
                     }
 
                     return if let Some(w) = KEYWORDS.get(id) {
-                        Some((start, *w, end))
+                        // Soroban-specific storage type keywords are only
+                        // meaningful for the Soroban target. For all other
+                        // targets they are treated as plain identifiers so
+                        // that standard Solidity code using these words as
+                        // variable or function names continues to compile.
+                        if !self.soroban
+                            && matches!(w, Token::Persistent | Token::Temporary | Token::Instance)
+                        {
+                            Some((start, Token::Identifier(id), end))
+                        } else {
+                            Some((start, *w, end))
+                        }
                     } else {
                         Some((start, Token::Identifier(id), end))
                     };
