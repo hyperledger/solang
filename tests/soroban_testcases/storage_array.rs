@@ -3,6 +3,7 @@
 use crate::build_solidity;
 use soroban_sdk::{IntoVal, Val};
 
+// TODO: check this test since it takes too much time.
 #[test]
 fn storage_array_ops_test() {
     let contract_src = r#"
@@ -96,10 +97,8 @@ fn storage_array_ops_test() {
         }
     "#;
 
-    // Build once; deploy fresh instances for each scenario to avoid state carryover.
     let mut runtime = build_solidity(contract_src, |_| {});
 
-    // 1) push_pop(): after operations -> [15, 5]; return 15 + 5 = 20
     let addr = runtime.contracts.last().unwrap();
     let expected: Val = 20_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(addr, "push_pop", vec![]);
@@ -107,40 +106,33 @@ fn storage_array_ops_test() {
     println!("expected: {expected:?}");
     assert!(expected.shallow_eq(&res));
 
-    // 2) loop(): new instance, pushes 5,10,15 and sums => 30
     let addr2 = runtime.deploy_contract(contract_src);
     let expected: Val = 30_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(&addr2, "loop", vec![]);
     assert!(expected.shallow_eq(&res));
 
-    // 3) random_access(index): new instance
     let addr3 = runtime.deploy_contract(contract_src);
 
-    // index 0: 5 + 10 = 15
     let expected: Val = 15_u64.into_val(&runtime.env);
     let args = vec![0_u64.into_val(&runtime.env)];
     let res = runtime.invoke_contract(&addr3, "random_access", args);
     assert!(expected.shallow_eq(&res));
 
-    // index 1: 10 + 15 = 25
     let expected: Val = 25_u64.into_val(&runtime.env);
     let args = vec![1_u64.into_val(&runtime.env)];
     let res = runtime.invoke_contract(&addr3, "random_access", args);
     assert!(expected.shallow_eq(&res));
 
-    // 4) pop_len(): start with [], push 3 items then pop 2 => length = 1
     let addr4 = runtime.deploy_contract(contract_src);
     let expected: Val = 1_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(&addr4, "pop_len", vec![]);
     assert!(expected.shallow_eq(&res));
 
-    // 5) mem_to_storage(): copy [1,2,3] into storage and sum => 6
     let addr5 = runtime.deploy_contract(contract_src);
     let expected: Val = 6_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(&addr5, "mem_to_storage", vec![]);
     assert!(expected.shallow_eq(&res));
 
-    // 6) storage_to_mem(): start storage [7,9,11], copy to memory and sum => 27
     let addr6 = runtime.deploy_contract(contract_src);
     let expected: Val = 27_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(&addr6, "storage_to_mem", vec![]);
@@ -187,22 +179,140 @@ fn storage_array_of_structs_test() {
 
     let mut runtime = build_solidity(contract_src, |_| {});
 
-    // 1) push_pair_len => 2
     let addr1 = runtime.contracts.last().unwrap();
     let expected: Val = 2_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(addr1, "push_pair_len", vec![]);
     assert!(expected.shallow_eq(&res));
 
-    // 2) write_then_read => 20
     let addr2 = runtime.deploy_contract(contract_src);
     let expected: Val = 20_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(&addr2, "write_then_read", vec![]);
     assert!(expected.shallow_eq(&res));
 
-    // 3) iter_sum => 21
     let addr3 = runtime.deploy_contract(contract_src);
     let expected: Val = 21_u64.into_val(&runtime.env);
     let res = runtime.invoke_contract(&addr3, "iter_sum", vec![]);
     println!("res: {res:?}");
     assert!(expected.shallow_eq(&res));
+}
+
+#[test]
+fn storage_nested_array_test() {
+    let contract_src = r#"
+        contract nested_storage {
+            struct Pair { uint64 a; uint64 b; }
+
+            uint64[][] grid;
+            Pair[][] pairs;
+
+            function int_leaf() public returns (uint64) {
+                grid.push();
+                grid.push();
+                grid[0].push(1);
+                grid[0].push(2);
+                grid[1].push(3);
+                grid[1].push(4);
+
+                grid[1][0] = 30;
+
+                return grid[0][0] + grid[0][1] + grid[1][0] + grid[1][1];
+            }
+
+            function struct_leaf() public returns (uint64) {
+                pairs.push();
+                pairs.push();
+                pairs[0].push(Pair(1, 2));
+                pairs[0].push(Pair(3, 4));
+                pairs[1].push(Pair(5, 6));
+
+                pairs[1][0].a = 30;
+
+                return pairs[0][0].a + pairs[0][0].b
+                     + pairs[0][1].a + pairs[0][1].b
+                     + pairs[1][0].a + pairs[1][0].b;
+            }
+        }
+    "#;
+
+    let mut runtime = build_solidity(contract_src, |_| {});
+
+    let addr1 = runtime.contracts.last().unwrap();
+    let expected: Val = 37_u64.into_val(&runtime.env);
+    let res = runtime.invoke_contract(addr1, "int_leaf", vec![]);
+    assert!(expected.shallow_eq(&res));
+
+    let addr2 = runtime.deploy_contract(contract_src);
+    let expected: Val = 46_u64.into_val(&runtime.env);
+    let res = runtime.invoke_contract(&addr2, "struct_leaf", vec![]);
+    assert!(expected.shallow_eq(&res));
+}
+
+#[test]
+fn storage_nested_array_ops_test() {
+    let contract_src = r#"
+        contract nested_ops {
+            struct Pair { uint64 a; uint64 b; }
+
+            uint64[][] grid;
+            Pair[][] pairs;
+
+            // ---- int leaf ----
+            function add_row() public { grid.push(); }                       // push outer
+            function push_int(uint64 i, uint64 v) public { grid[i].push(v); } // push inner
+            function pop_int(uint64 i) public { grid[i].pop(); }             // pop inner
+            function set_int(uint64 i, uint64 j, uint64 v) public { grid[i][j] = v; } // write leaf
+            function get_int(uint64 i, uint64 j) public returns (uint64) { return grid[i][j]; } // read leaf
+            function row_len(uint64 i) public returns (uint64) { return grid[i].length; }
+
+            // ---- struct leaf ----
+            function add_prow() public { pairs.push(); }
+            function push_pair(uint64 i, uint64 a, uint64 b) public { pairs[i].push(Pair(a, b)); }
+            function pop_pair(uint64 i) public { pairs[i].pop(); }
+            function set_pair(uint64 i, uint64 j, uint64 a, uint64 b) public { pairs[i][j] = Pair(a, b); } // whole element
+            function set_pair_a(uint64 i, uint64 j, uint64 v) public { pairs[i][j].a = v; }               // field only
+            function get_pair(uint64 i, uint64 j) public returns (uint64) { return pairs[i][j].a + pairs[i][j].b; }
+            function prow_len(uint64 i) public returns (uint64) { return pairs[i].length; }
+        }
+    "#;
+
+    let runtime = build_solidity(contract_src, |_| {});
+    let addr = runtime.contracts.last().unwrap().clone();
+    let e = runtime.env.clone();
+
+    let u = |n: u64| -> Val { n.into_val(&e) };
+    macro_rules! call {
+        ($f:expr $(, $a:expr)*) => {
+            runtime.invoke_contract(&addr, $f, vec![$(u($a)),*])
+        };
+    }
+
+    call!("add_row");
+    call!("add_row");
+    call!("push_int", 0, 1);
+    call!("push_int", 0, 2);
+    call!("push_int", 0, 3);
+    call!("push_int", 1, 10);
+
+    call!("pop_int", 0);
+    call!("set_int", 0, 1, 99);
+
+    assert!(u(1).shallow_eq(&call!("get_int", 0, 0)));
+    assert!(u(99).shallow_eq(&call!("get_int", 0, 1)));
+    assert!(u(10).shallow_eq(&call!("get_int", 1, 0)));
+    assert!(u(2).shallow_eq(&call!("row_len", 0)));
+    assert!(u(1).shallow_eq(&call!("row_len", 1)));
+
+    call!("add_prow");
+    call!("add_prow");
+    call!("push_pair", 0, 1, 2);
+    call!("push_pair", 0, 3, 4);
+    call!("push_pair", 1, 5, 6);
+
+    call!("pop_pair", 0);
+    call!("set_pair", 0, 0, 7, 8);
+    call!("set_pair_a", 1, 0, 30);
+    assert!(u(15).shallow_eq(&call!("get_pair", 0, 0)));
+    assert!(u(36).shallow_eq(&call!("get_pair", 1, 0)));
+    assert!(u(1).shallow_eq(&call!("prow_len", 0)));
+    assert!(u(1).shallow_eq(&call!("prow_len", 1)));
 }

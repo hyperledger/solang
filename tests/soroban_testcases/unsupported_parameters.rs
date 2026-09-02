@@ -38,14 +38,14 @@ fn compile_soroban(src: &str) -> Namespace {
 }
 
 #[test]
-fn array_and_multiple_return_abi_types_are_rejected() {
+fn arrays_accepted_multiple_returns_rejected() {
     let ns = compile_soroban(
         r#"contract test {
     struct Item {
         uint64 value;
     }
 
-    function bytes_array(bytes[] memory data) public returns (uint64) {
+    function struct_array(Item[] memory data) public returns (uint64) {
         return uint64(data.length);
     }
 
@@ -75,11 +75,12 @@ fn array_and_multiple_return_abi_types_are_rejected() {
         .filter(|diagnostic| diagnostic.level == Level::Error)
         .collect::<Vec<_>>();
 
-    assert_eq!(errors.len(), 3);
-    assert!(errors.iter().any(|diagnostic| diagnostic.message
-        == "type 'bytes[] memory' is not supported as a Soroban external function parameter"));
-    assert!(errors.iter().any(|diagnostic| diagnostic.message
+    assert!(!errors.iter().any(|diagnostic| diagnostic.message
         == "type 'uint64[] memory' is not supported as a Soroban external function return value"));
+    assert!(!errors.iter().any(|diagnostic| diagnostic.message
+        == "type 'struct test.Item[] memory' is not supported as a Soroban external function parameter"));
+
+    assert_eq!(errors.len(), 1);
     assert!(errors.iter().any(|diagnostic| diagnostic.message
         == "Soroban external functions can return at most one value"));
 }

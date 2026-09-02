@@ -57,7 +57,7 @@ fn fixed_bytes_index_assignment_is_rejected() {
 }
 
 #[test]
-fn nested_bytesn_array_abi_is_rejected() {
+fn bytesn_array_abi_is_supported() {
     let ns = compile_soroban(
         r#"contract T {
     function f(bytes32[] memory data) public pure returns (uint64) {
@@ -73,13 +73,13 @@ fn nested_bytesn_array_abi_is_rejected() {
         .collect::<Vec<_>>();
 
     assert!(
-        !errors.is_empty(),
-        "bytes32[] memory param must be rejected"
+        errors.is_empty(),
+        "bytes32[] memory param must be accepted, got: {errors:?}"
     );
 }
 
 #[test]
-fn nested_bytes_array_abi_is_rejected() {
+fn bytes_array_abi_is_supported() {
     let ns = compile_soroban(
         r#"contract T {
     function f(bytes[] memory data) public pure returns (uint64) {
@@ -94,5 +94,8 @@ fn nested_bytes_array_abi_is_rejected() {
         .filter(|d| d.level == Level::Error)
         .collect::<Vec<_>>();
 
-    assert!(!errors.is_empty(), "bytes[] memory param must be rejected");
+    assert!(
+        errors.is_empty(),
+        "bytes[] memory param must be accepted, got: {errors:?}"
+    );
 }

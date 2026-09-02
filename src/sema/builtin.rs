@@ -36,17 +36,39 @@ pub struct Prototype {
 }
 
 // A list of all Solidity builtins functions
-pub static BUILTIN_FUNCTIONS: Lazy<[Prototype; 29]> = Lazy::new(|| {
+pub static BUILTIN_FUNCTIONS: Lazy<[Prototype; 31]> = Lazy::new(|| {
     [
         Prototype {
             builtin: Builtin::ExtendInstanceTtl,
             namespace: None,
             method: vec![],
-            name: "extendInstanceTtl",  
+            name: "extendInstanceTtl",
             params: vec![Type::Uint(32), Type::Uint(32)],
             ret: vec![Type::Int(64)],
             target: vec![Target::Soroban],
             doc: "If the TTL for the current contract instance and code (if applicable) is below `threshold` ledgers, extend `live_until_ledger_seq` such that TTL == `extend_to`, where TTL is defined as live_until_ledger_seq - current ledger.",
+            constant: false,
+        },
+        Prototype {
+            builtin: Builtin::UpdateCurrentContractWasm,
+            namespace: None,
+            method: vec![],
+            name: "updateCurrentContractWasm",
+            params: vec![Type::Bytes(32)],
+            ret: vec![],
+            target: vec![Target::Soroban],
+            doc: "Replaces the running contract's Wasm code with the module identified by the given 32-byte hash (an already-uploaded Wasm blob). Maps to the host function `update_current_contract_wasm`. The upgrade takes effect after the current invocation completes.",
+            constant: false,
+        },
+        Prototype {
+            builtin: Builtin::ToXdr,
+            namespace: None,
+            method: vec![],
+            name: "to_xdr",
+            params: vec![],
+            ret: vec![Type::DynamicBytes],
+            target: vec![Target::Soroban],
+            doc: "Serialize any single value to its canonical XDR `bytes` encoding via the Soroban host function `serialize_to_bytes`. Equivalent to the Soroban SDK's `val.to_xdr(&env)`.",
             constant: false,
         },
         Prototype {
@@ -996,6 +1018,28 @@ pub(super) fn resolve_call(
     symtable: &mut Symtable,
     diagnostics: &mut Diagnostics,
 ) -> Result<Expression, ()> {
+    if namespace.is_none() && id == "to_xdr" {
+        if args.len() != 1 {
+            diagnostics.push(Diagnostic::error(
+                *loc,
+                format!(
+                    "builtin function 'to_xdr' expects 1 argument, {} provided",
+                    args.len()
+                ),
+            ));
+            return Err(());
+        }
+
+        let arg = resolve_encode_arg(&args[0], context, ns, symtable, diagnostics)?;
+
+        return Ok(Expression::Builtin {
+            loc: *loc,
+            tys: vec![Type::DynamicBytes],
+            kind: Builtin::ToXdr,
+            args: vec![arg],
+        });
+    }
+
     let funcs = BUILTIN_FUNCTIONS
         .iter()
         .filter(|p| p.name == id && p.namespace == namespace && p.method.is_empty())
@@ -1401,26 +1445,7 @@ pub(super) fn resolve_namespace_call(
     }
 
     for arg in args_iter {
-        let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
-        let ty = expr.ty();
-
-        if ty.is_mapping() || ty.is_recursive(ns) {
-            diagnostics.push(Diagnostic::error(
-                arg.loc(),
-                format!("Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded", ty.to_string(ns)),
-            ));
-
-            return Err(());
-        }
-
-        expr = expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics)?;
-
-        // A string or hex literal should be encoded as a string
-        if let Expression::BytesLiteral { .. } = &expr {
-            expr = expr.cast(&arg.loc(), &Type::String, true, ns, diagnostics)?;
-        }
-
-        resolved_args.push(expr);
+        resolved_args.push(resolve_encode_arg(arg, context, ns, symtable, diagnostics)?);
     }
 
     Ok(Expression::Builtin {
@@ -1429,6 +1454,38 @@ pub(super) fn resolve_namespace_call(
         kind: builtin,
         args: resolved_args,
     })
+}
+
+fn resolve_encode_arg(
+    arg: &pt::Expression,
+    context: &mut ExprContext,
+    ns: &mut Namespace,
+    symtable: &mut Symtable,
+    diagnostics: &mut Diagnostics,
+) -> Result<Expression, ()> {
+    let mut expr = expression(arg, context, ns, symtable, diagnostics, ResolveTo::Unknown)?;
+    let ty = expr.ty();
+
+    if ty.is_mapping() || ty.is_recursive(ns) {
+        diagnostics.push(Diagnostic::error(
+            arg.loc(),
+            format!(
+                "Invalid type '{}': mappings and recursive types cannot be abi decoded or encoded",
+                ty.to_string(ns)
+            ),
+        ));
+
+        return Err(());
+    }
+
+    expr = expr.cast(&arg.loc(), ty.deref_any(), true, ns, diagnostics)?;
+
+    // A string or hex literal should be encoded as a string
+    if let Expression::BytesLiteral { .. } = &expr {
+        expr = expr.cast(&arg.loc(), &Type::String, true, ns, diagnostics)?;
+    }
+
+    Ok(expr)
 }
 
 /// Resolve a builtin call

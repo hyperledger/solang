@@ -97,6 +97,9 @@ impl HostFunctions {
             HostFunctions::AuthAsCurrContract => {
                 bin.context.i64_type().fn_type(&[ty.into()], false)
             }
+            HostFunctions::UpdateCurrentContractWasm => {
+                bin.context.i64_type().fn_type(&[ty.into()], false)
+            }
             HostFunctions::MapNewFromLinearMemory => bin
                 .context
                 .i64_type()
@@ -110,6 +113,16 @@ impl HostFunctions {
                 .fn_type(&[ty.into(), ty.into(), ty.into()], false),
 
             HostFunctions::MapGet => bin
+                .context
+                .i64_type()
+                .fn_type(&[ty.into(), ty.into()], false),
+
+            HostFunctions::MapDel => bin
+                .context
+                .i64_type()
+                .fn_type(&[ty.into(), ty.into()], false),
+
+            HostFunctions::MapHas => bin
                 .context
                 .i64_type()
                 .fn_type(&[ty.into(), ty.into()], false),
@@ -190,6 +203,10 @@ impl HostFunctions {
                 .fn_type(&[ty.into(), ty.into()], false),
             HostFunctions::ComputeHashSha256 => bin.context.i64_type().fn_type(&[ty.into()], false),
             HostFunctions::ComputeHashKeccak256 => {
+                bin.context.i64_type().fn_type(&[ty.into()], false)
+            }
+            HostFunctions::SerializeToBytes => bin.context.i64_type().fn_type(&[ty.into()], false),
+            HostFunctions::DeserializeFromBytes => {
                 bin.context.i64_type().fn_type(&[ty.into()], false)
             }
         }
@@ -534,10 +551,13 @@ impl SorobanTarget {
             HostFunctions::ObjFromI256Pieces,
             HostFunctions::RequireAuth,
             HostFunctions::AuthAsCurrContract,
+            HostFunctions::UpdateCurrentContractWasm,
             HostFunctions::MapNewFromLinearMemory,
             HostFunctions::MapNew,
             HostFunctions::MapPut,
             HostFunctions::MapGet,
+            HostFunctions::MapDel,
+            HostFunctions::MapHas,
             HostFunctions::VecPushBack,
             HostFunctions::VecGet,
             HostFunctions::VecPut,
@@ -560,6 +580,8 @@ impl SorobanTarget {
             HostFunctions::ContractEvent,
             HostFunctions::ComputeHashSha256,
             HostFunctions::ComputeHashKeccak256,
+            HostFunctions::SerializeToBytes,
+            HostFunctions::DeserializeFromBytes,
         ];
 
         for func in &host_functions {

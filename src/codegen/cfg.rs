@@ -1671,7 +1671,7 @@ fn function_cfg(
     cfg.nonpayable = !func.is_payable();
 
     // populate the argument variables
-    populate_arguments(func, &mut cfg, &mut vartab, ns);
+    populate_arguments(func, &mut cfg, &mut vartab);
 
     // Hold your breath, this is the trickest part of the codegen ahead.
     // For each contract, the top-level constructor calls the base constructors. The base
@@ -1860,19 +1860,10 @@ pub(crate) fn populate_arguments<T: FunctionAttributes>(
     func: &T,
     cfg: &mut ControlFlowGraph,
     vartab: &mut Vartable,
-    ns: &Namespace,
 ) {
     for (i, arg) in func.get_symbol_table().arguments.iter().enumerate() {
         if let Some(pos) = arg {
             let var = &func.get_symbol_table().vars[pos];
-            let mut runtime_ty = var.ty.clone();
-
-            if ns.target == Target::Soroban && cfg.public {
-                runtime_ty = soroban_runtime_arg_ty(&runtime_ty);
-                if let Some(slot) = vartab.vars.get_mut(pos) {
-                    slot.ty = runtime_ty.clone();
-                }
-            }
 
             cfg.add(
                 vartab,
@@ -1881,24 +1872,12 @@ pub(crate) fn populate_arguments<T: FunctionAttributes>(
                     res: *pos,
                     expr: Expression::FunctionArg {
                         loc: var.id.loc,
-                        ty: runtime_ty,
+                        ty: var.ty.clone(),
                         arg_no: i,
                     },
                 },
             );
         }
-    }
-}
-
-fn soroban_runtime_arg_ty(ty: &Type) -> Type {
-    match ty {
-        Type::Array(elem_ty, dims) if dims.last() == Some(&ast::ArrayLength::Dynamic) => {
-            Type::Array(
-                Box::new(Type::SorobanHandle(Box::new(elem_ty.as_ref().clone()))),
-                dims.clone(),
-            )
-        }
-        _ => ty.clone(),
     }
 }
 

@@ -88,7 +88,7 @@ fn yul_function_cfg(
     cfg.nonpayable = true;
 
     // populate the arguments
-    populate_arguments(yul_func, &mut cfg, &mut vartab, ns);
+    populate_arguments(yul_func, &mut cfg, &mut vartab);
     // populate the returns, if any
     populate_named_returns(yul_func, ns, &mut cfg, &mut vartab);
 

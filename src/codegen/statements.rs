@@ -12,12 +12,14 @@ use super::{
     Expression, Options,
 };
 use crate::codegen::interface::TargetCodegen;
+use crate::codegen::targets::soroban::soroban_storage_delete;
 use crate::sema::ast::{
     self, ArrayLength, DestructureField, Function, Namespace, RetrieveType, SolanaAccount,
     Statement, Type, Type::Uint,
 };
 use crate::sema::solana_accounts::BuiltinAccounts;
 use crate::sema::Recurse;
+use crate::Target;
 use num_bigint::BigInt;
 use num_traits::Zero;
 use solang_parser::pt::{self, CodeLocation, Loc, Loc::Codegen};
@@ -218,6 +220,22 @@ pub(crate) fn statement(
             let _ = expression(expr, cfg, contract_no, Some(func), ns, vartab, opt, target);
         }
         Statement::Delete(_, ty, expr) => {
+            if ns.target == Target::Soroban
+                && soroban_storage_delete(
+                    expr,
+                    ty,
+                    cfg,
+                    contract_no,
+                    Some(func),
+                    ns,
+                    vartab,
+                    opt,
+                    target,
+                )
+            {
+                return;
+            }
+
             let var_expr = expression(expr, cfg, contract_no, Some(func), ns, vartab, opt, target);
 
             cfg.add(
@@ -1103,6 +1121,7 @@ fn try_load_and_cast(
         }
         Type::Ref(ty) => match *ty {
             Type::Array(_, _) => expr.cast(to_ty, ns),
+            Type::Struct(_) if ns.target == Target::Soroban => expr.cast(to_ty, ns),
             _ => Expression::Load {
                 loc: pt::Loc::Builtin,
                 ty: *ty,

@@ -454,14 +454,16 @@ fn bitwise_not(
         return Ok(expr);
     }
 
-    let expr_ty = expr.ty();
+    let value_ty = expr.ty().deref_any().clone();
 
     // Ensure that the argument is an integer or fixed bytes type
-    type_bits_and_sign(&expr_ty, loc, true, ns, diagnostics)?;
+    type_bits_and_sign(&value_ty, loc, true, ns, diagnostics)?;
+
+    let expr = expr.cast(loc, &value_ty, true, ns, diagnostics)?;
 
     Ok(Expression::BitwiseNot {
         loc: *loc,
-        ty: expr_ty,
+        ty: value_ty,
         expr: Box::new(expr),
     })
 }
@@ -536,18 +538,22 @@ fn negate(
                     value: -r,
                 })
             } else {
-                type_bits_and_sign(&expr_type, loc, false, ns, diagnostics)?;
+                let value_ty = expr_type.deref_any().clone();
 
-                if !expr_type.is_signed_int(ns) {
+                type_bits_and_sign(&value_ty, loc, false, ns, diagnostics)?;
+
+                if !value_ty.is_signed_int(ns) {
                     diagnostics.push(Diagnostic::error(
                         *loc,
                         "negate not allowed on unsigned".to_string(),
                     ));
                 }
 
+                let expr = expr.cast(loc, &value_ty, true, ns, diagnostics)?;
+
                 Ok(Expression::Negate {
                     loc: *loc,
-                    ty: expr_type,
+                    ty: value_ty,
                     unchecked: context.unchecked,
                     expr: Box::new(expr),
                 })
