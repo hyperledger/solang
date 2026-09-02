@@ -1349,3 +1349,53 @@ fn loc_union() {
     second.union(&other_first);
     assert_eq!(second, Loc::File(1, 4, 24));
 }
+
+#[test]
+fn soroban_keywords_are_identifiers_in_default_parse() {
+    // Issue #1847: `persistent`, `temporary`, and `instance` should be
+    // usable as regular identifiers when not targeting Soroban.
+    let src = r#"
+        contract C {
+            uint256 persistent = 1;
+            uint256 temporary = 2;
+            uint256 instance = 3;
+
+            function persistent() public pure returns (uint256) {
+                return 1;
+            }
+
+            function temporary() public pure returns (uint256) {
+                return 2;
+            }
+
+            function instance() public pure returns (uint256) {
+                return 3;
+            }
+        }
+    "#;
+
+    let result = crate::parse(src, 0);
+    assert!(
+        result.is_ok(),
+        "default parse() should accept persistent/temporary/instance as identifiers, got: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn soroban_keywords_are_keywords_in_soroban_parse() {
+    // Issue #1847: `persistent`, `temporary`, and `instance` should be
+    // recognised as Soroban storage-type keywords when using parse_soroban().
+    let src = r#"
+        contract C {
+            uint256 persistent x = 1;
+        }
+    "#;
+
+    let result = crate::parse_soroban(src, 0);
+    assert!(
+        result.is_ok(),
+        "parse_soroban() should accept persistent as a keyword, got: {:?}",
+        result.err()
+    );
+}

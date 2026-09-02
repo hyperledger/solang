@@ -37,10 +37,32 @@ pub fn parse(
     src: &str,
     file_no: usize,
 ) -> Result<(pt::SourceUnit, Vec<pt::Comment>), Vec<Diagnostic>> {
+    parse_internal(src, file_no, false)
+}
+
+/// Parses a Solidity file with Soroban storage-type keywords enabled.
+///
+/// When using this function, the keywords `persistent`, `temporary`, and
+/// `instance` are recognised as Soroban storage-type annotations. Use the
+/// regular [`parse`] function for all other compilation targets so that
+/// these words can be used as ordinary identifiers.
+pub fn parse_soroban(
+    src: &str,
+    file_no: usize,
+) -> Result<(pt::SourceUnit, Vec<pt::Comment>), Vec<Diagnostic>> {
+    parse_internal(src, file_no, true)
+}
+
+fn parse_internal(
+    src: &str,
+    file_no: usize,
+    soroban: bool,
+) -> Result<(pt::SourceUnit, Vec<pt::Comment>), Vec<Diagnostic>> {
     // parse phase
     let mut comments = Vec::new();
     let mut lexer_errors = Vec::new();
     let mut lex = lexer::Lexer::new(src, file_no, &mut comments, &mut lexer_errors);
+    lex.set_soroban_keywords(soroban);
 
     let mut parser_errors = Vec::new();
     let res = solidity::SourceUnitParser::new().parse(src, file_no, &mut parser_errors, &mut lex);

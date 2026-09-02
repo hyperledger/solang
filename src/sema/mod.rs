@@ -12,7 +12,7 @@ use crate::file_resolver::{FileResolver, ResolvedFile};
 use num_bigint::BigInt;
 use solang_parser::{
     doccomment::{parse_doccomments, DocComment},
-    parse,
+    parse, parse_soroban,
     pt::{self, CodeLocation},
 };
 use std::{ffi::OsString, str};
@@ -105,7 +105,13 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
         file.import_no,
     ));
 
-    let (pt, comments) = match parse(&source_code, file_no) {
+    let parse_fn = if ns.target == crate::Target::Soroban {
+        parse_soroban
+    } else {
+        parse
+    };
+
+    let (pt, comments) = match parse_fn(&source_code, file_no) {
         Ok(s) => s,
         Err(mut errors) => {
             ns.diagnostics.append(&mut errors);

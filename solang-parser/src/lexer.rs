@@ -361,6 +361,11 @@ pub struct Lexer<'input> {
     last_tokens: [Option<Token<'input>>; 2],
     /// The mutable reference to the error vector.
     pub errors: &'input mut Vec<LexicalError>,
+    /// When true, `persistent`, `temporary`, and `instance` are lexed as
+    /// keywords. When false (the default), they are treated as plain
+    /// identifiers so that non-Soroban targets remain compatible with
+    /// standard Solidity.
+    soroban: bool,
 }
 
 /// An error thrown by [Lexer].
@@ -593,7 +598,14 @@ impl<'input> Lexer<'input> {
             parse_semver: false,
             last_tokens: [None, None],
             errors,
+            soroban: false,
         }
+    }
+
+    /// Enable Soroban keyword mode. When enabled, `persistent`, `temporary`,
+    /// and `instance` are lexed as keywords rather than identifiers.
+    pub fn set_soroban_keywords(&mut self, enable: bool) {
+        self.soroban = enable;
     }
 
     fn parse_number(&mut self, mut start: usize, ch: char) -> Result<'input> {
@@ -860,7 +872,15 @@ impl<'input> Lexer<'input> {
                     }
 
                     return if let Some(w) = KEYWORDS.get(id) {
-                        Some((start, *w, end))
+                        // Soroban storage-type keywords should only be
+                        // recognised when we are targeting Soroban.
+                        if !self.soroban
+                            && matches!(w, Token::Persistent | Token::Temporary | Token::Instance)
+                        {
+                            Some((start, Token::Identifier(id), end))
+                        } else {
+                            Some((start, *w, end))
+                        }
                     } else {
                         Some((start, Token::Identifier(id), end))
                     };
