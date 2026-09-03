@@ -19,7 +19,7 @@ Solang is under active development right now, and has
 
 ## Solana
 
-Please follow the [Solang Getting Started Guide](https://solana.com/developers/guides/solang/getting-started).
+Please follow the [Solang Getting Started Guide](https://solang.readthedocs.io/en/latest/targets/solana.html#getting-started-on-solana).
 
 Solang is part of the [Solana Tools Suite](https://docs.solana.com/cli/install-solana-cli-tools) (version v1.16.3 and higher).
 There is no need to install it separately.
