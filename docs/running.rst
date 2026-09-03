@@ -58,8 +58,11 @@ Options:
   Only compile the code for the specified contracts. If any those contracts cannot be found, produce an error.
 
 -O *optimization level*
-  This takes one argument, which can either be ``none``, ``less``, ``default``,
-  or ``aggressive``. These correspond to llvm optimization levels.
+  This takes one argument, which can be ``0``, ``1``, ``2``, ``3``, ``s``,
+  or ``z``. These correspond to standard GCC/Clang optimization levels.
+  ``s`` optimizes for size and ``z`` aggressively optimizes for size.
+  The default is ``2``. The old values ``none``, ``less``, ``default``,
+  and ``aggressive`` are still accepted for backward compatibility.
 
 \-\-importpath *directory*
   When resolving ``import`` directives, search this directory. By default ``import``

@@ -36,8 +36,8 @@ strength-reduce = true
 vector-to-slice = true
 common-subexpression-elimination = true
 
-# Valid LLVM optimization levels are: none, less, default, aggressive
-llvm-IR-optimization-level = "aggressive"
+# Valid LLVM optimization levels are: 0, 1, 2, 3, s, z (also accepts: none, less, default, aggressive)
+llvm-IR-optimization-level = "3"
 
 [compiler-output]
 verbose = false

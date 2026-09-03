@@ -15,7 +15,7 @@ mod tests {
 
     #[test]
     fn parse_compile_options() {
-        let mut command: Vec<&str> = "solang compile flipper.sol --target polkadot --value-length=31 --address-length=33 --no-dead-storage --no-constant-folding --no-strength-reduce --no-vector-to-slice --no-cse -O aggressive".split(' ').collect();
+        let mut command: Vec<&str> = "solang compile flipper.sol --target polkadot --value-length=31 --address-length=33 --no-dead-storage --no-constant-folding --no-strength-reduce --no-vector-to-slice --no-cse -O 3".split(' ').collect();
         let mut cli = Cli::parse_from(command);
 
         if let Commands::Compile(compile_args) = cli.command {
@@ -31,7 +31,7 @@ mod tests {
             assert!(!compile_args.optimizations.dead_storage);
             assert!(!compile_args.optimizations.vector_to_slice);
             assert!(!compile_args.optimizations.strength_reduce);
-            assert_eq!(compile_args.optimizations.opt_level.unwrap(), "aggressive");
+            assert_eq!(compile_args.optimizations.opt_level.unwrap(), "3");
         }
 
         command = "solang compile flipper.sol --target polkadot --no-log-runtime-errors --no-prints -g --release".split(' ').collect();
@@ -121,7 +121,7 @@ mod tests {
         strength-reduce = false
         vector-to-slice = false
         common-subexpression-elimination = true
-        llvm-IR-optimization-level = "aggressive""#;
+        llvm-IR-optimization-level = "3""#;
 
         let opt: cli::Optimizations = toml::from_str(opt_toml).unwrap();
 
@@ -130,7 +130,7 @@ mod tests {
         assert!(!opt.constant_folding);
         assert!(!opt.strength_reduce);
         assert!(!opt.vector_to_slice);
-        assert_eq!(opt.opt_level.unwrap(), "aggressive");
+        assert_eq!(opt.opt_level.unwrap(), "3");
     }
 
     #[cfg(feature = "wasm_opt")]
@@ -223,14 +223,14 @@ mod tests {
                     strength_reduce: true,
                     vector_to_slice: true,
                     common_subexpression_elimination: true,
-                    opt_level: Some("aggressive".to_owned()),
+                    opt_level: Some("3".to_owned()),
                     #[cfg(feature = "wasm_opt")]
                     wasm_opt_passes: None
                 }
             }
         );
 
-        let command = "solang compile flipper.sol sesa.sol --config-file solang.toml --contract-authors not_sesa --target polkadot --value-length=31 --address-length=33 --no-dead-storage --no-constant-folding --no-strength-reduce --no-vector-to-slice --no-cse -O aggressive".split(' ');
+        let command = "solang compile flipper.sol sesa.sol --config-file solang.toml --contract-authors not_sesa --target polkadot --value-length=31 --address-length=33 --no-dead-storage --no-constant-folding --no-strength-reduce --no-vector-to-slice --no-cse -O 3".split(' ');
 
         let matches = Cli::command().get_matches_from(command);
 
@@ -279,7 +279,7 @@ mod tests {
                     strength_reduce: false,
                     vector_to_slice: false,
                     common_subexpression_elimination: false,
-                    opt_level: Some("aggressive".to_owned()),
+                    opt_level: Some("3".to_owned()),
                     #[cfg(feature = "wasm_opt")]
                     wasm_opt_passes: None
                 }

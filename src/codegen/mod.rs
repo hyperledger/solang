@@ -242,6 +242,8 @@ pub struct Options {
     pub common_subexpression_elimination: bool,
     pub generate_debug_information: bool,
     pub opt_level: OptimizationLevel,
+    /// Size optimization level: 0 = none, 1 = -Os, 2 = -Oz
+    pub opt_size_level: u32,
     pub log_runtime_errors: bool,
     pub log_prints: bool,
     pub strict_soroban_types: bool,
@@ -260,6 +262,7 @@ impl Default for Options {
             common_subexpression_elimination: true,
             generate_debug_information: false,
             opt_level: OptimizationLevel::Default,
+            opt_size_level: 0,
             log_runtime_errors: false,
             log_prints: true,
             strict_soroban_types: false,

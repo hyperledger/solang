@@ -392,7 +392,7 @@ pub struct Optimizations {
     )]
     pub common_subexpression_elimination: bool,
 
-    #[arg(name = "OPT", help = "Set llvm optimizer level ", short = 'O', default_value = "default", value_parser = ["none", "less", "default", "aggressive"], num_args = 1)]
+    #[arg(name = "OPT", help = "Set LLVM optimizer level (0, 1, 2, 3, s, z)", short = 'O', default_value = "2", value_parser = ["0", "1", "2", "3", "s", "z", "none", "less", "default", "aggressive"], num_args = 1)]
     #[serde(rename(deserialize = "llvm-IR-optimization-level"))]
     pub opt_level: Option<String>,
 
@@ -564,16 +564,19 @@ pub fn options_arg(
     optimizations: &Optimizations,
     compiler_inputs: &CompilePackage,
 ) -> Options {
-    let opt_level = if let Some(level) = &optimizations.opt_level {
+    let (opt_level, opt_size_level) = if let Some(level) = &optimizations.opt_level {
         match level.as_str() {
-            "none" => OptimizationLevel::None,
-            "less" => OptimizationLevel::Less,
-            "default" => OptimizationLevel::Default,
-            "aggressive" => OptimizationLevel::Aggressive,
+            // Standard GCC/Clang-style optimization levels
+            "0" | "none" => (OptimizationLevel::None, 0),
+            "1" | "less" => (OptimizationLevel::Less, 0),
+            "2" | "default" => (OptimizationLevel::Default, 0),
+            "3" | "aggressive" => (OptimizationLevel::Aggressive, 0),
+            "s" => (OptimizationLevel::Default, 1),
+            "z" => (OptimizationLevel::Default, 2),
             _ => unreachable!(),
         }
     } else {
-        OptimizationLevel::Default
+        (OptimizationLevel::Default, 0)
     };
 
     Options {
@@ -584,6 +587,7 @@ pub fn options_arg(
         common_subexpression_elimination: optimizations.common_subexpression_elimination,
         generate_debug_information: debug.generate_debug_info,
         opt_level,
+        opt_size_level,
         log_runtime_errors: debug.log_runtime_errors && !debug.release,
         log_prints: debug.log_prints && !debug.release,
         strict_soroban_types: debug.strict_soroban_types,
