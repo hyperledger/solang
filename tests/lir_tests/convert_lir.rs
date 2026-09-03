@@ -1173,7 +1173,7 @@ fn test_external_fn() {
 block#0 entry:
     ptr<struct.vector<uint8>> %buffer = ptr<struct.vector<uint8>>(arg#0);
     uint32 %temp.4 = builtin: ArrayLength(ptr<struct.vector<uint8>>(%buffer));
-    bool %temp.ssa_ir.5 = uint32(40) (u)< uint32(%temp.4);
+    bool %temp.ssa_ir.5 = uint32(40) (u)<= uint32(%temp.4);
     cbr bool(%temp.ssa_ir.5) block#1 else block#2;
 
 block#1 inbounds:

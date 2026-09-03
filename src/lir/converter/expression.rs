@@ -201,9 +201,9 @@ impl Converter<'_> {
                 ..
             } => {
                 let operator = if *signed {
-                    BinaryOperator::Lt
+                    BinaryOperator::Lte
                 } else {
-                    BinaryOperator::ULt
+                    BinaryOperator::ULte
                 };
                 self.binary_operation(
                     dest,
