@@ -168,6 +168,10 @@ fn testcase(path: PathBuf) {
     } else if current_fail < fails.len() {
         println!("STDERR: \n===8<===8<===\n{stderr}===8<===8<===\n");
 
-        panic!("NOT FOUND FAIL: {:?}", fails[current_check]);
+        panic!(
+            "NOT FOUND FAIL: {:?}, {}",
+            fails[current_fail],
+            path.display()
+        );
     }
 }
