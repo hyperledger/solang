@@ -80,6 +80,17 @@ pub(super) fn array_subscript(
     index = index.cast(&index.loc(), index_ty.deref_any(), true, ns, diagnostics)?;
 
     let deref_ty = array_ty.deref_any();
+
+    // Subscripting a zero-length bytes type is always out of bounds.
+    // Reject early to avoid a u8 underflow in codegen (array_length - 1).
+    if let Type::Bytes(0) = deref_ty {
+        diagnostics.push(Diagnostic::error(
+            *loc,
+            "array subscript is out of bounds".to_string(),
+        ));
+        return Err(());
+    }
+
     match deref_ty {
         Type::Bytes(_) | Type::Array(..) | Type::DynamicBytes | Type::Slice(_) => {
             if array_ty.is_contract_storage() {
