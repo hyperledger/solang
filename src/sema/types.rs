@@ -1424,7 +1424,11 @@ impl Type {
             Type::Unresolved => false,
             Type::FunctionSelector => false,
             Type::UserType(no) => ns.user_types[*no].ty.is_fixed_reference_type(ns),
-            _ => unreachable!("{:?}", self),
+            Type::Value
+            | Type::Void
+            | Type::Unreachable
+            | Type::BufferPointer
+            | Type::SorobanHandle(_) => false,
         }
     }
 
