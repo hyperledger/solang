@@ -2042,6 +2042,8 @@ fn return_with_values(
             )?;
             used_variable(ns, &cond, symtable);
 
+            let cond = cond.cast(&cond.loc(), &Type::Bool, true, ns, diagnostics)?;
+
             let left = return_with_values(left, &left.loc(), context, symtable, ns, diagnostics)?;
             used_variable(ns, &left, symtable);
 
