@@ -85,6 +85,21 @@ library SplToken {
 		tokenProgramId.call{accounts: metas}(instr);
 	}
 
+	/// Transfer @amount token from @from (PDA) to @to. The transaction will be signed by PDA account
+	function transfer_pda(address pda_token_account, address to, address pda, uint64 amount, bytes bump) internal {
+		bytes instr = new bytes(9);
+
+		instr[0] = uint8(TokenInstruction.Transfer);
+		instr.writeUint64LE(amount, 1);
+
+		AccountMeta[3] metas = [
+			AccountMeta({pubkey: pda_token_account, is_writable: true, is_signer: false}),
+			AccountMeta({pubkey: to, is_writable: true, is_signer: false}),
+			AccountMeta({pubkey: pda, is_writable: false, is_signer: true})
+		];
+		tokenProgramId.call{accounts: metas, seeds: [["msq", bump]]}(instr);
+	}
+
 	/// Burn @amount tokens in account. This transaction should be signed by the owner.
 	///
 	/// @param account the acount for which tokens should be burned
