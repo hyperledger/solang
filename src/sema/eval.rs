@@ -309,22 +309,31 @@ pub fn eval_const_rational(
             var_no,
             ..
         } => {
-            let expr = ns.contracts[*contract_no].variables[*var_no]
+            if let Some(init) = ns.contracts[*contract_no].variables[*var_no]
                 .initializer
                 .as_ref()
-                .unwrap()
-                .clone();
-
-            eval_const_rational(&expr, ns)
+            {
+                eval_const_rational(&init.clone(), ns)
+            } else {
+                Err(Diagnostic::error(
+                    expr.loc(),
+                    "constant variable has no value".to_string(),
+                ))
+            }
         }
         Expression::ConstantVariable {
             contract_no: None,
             var_no,
             ..
         } => {
-            let expr = ns.constants[*var_no].initializer.as_ref().unwrap().clone();
-
-            eval_const_rational(&expr, ns)
+            if let Some(init) = ns.constants[*var_no].initializer.as_ref() {
+                eval_const_rational(&init.clone(), ns)
+            } else {
+                Err(Diagnostic::error(
+                    expr.loc(),
+                    "constant variable has no value".to_string(),
+                ))
+            }
         }
         _ => Err(Diagnostic::error(
             expr.loc(),
