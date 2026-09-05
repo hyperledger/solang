@@ -218,6 +218,92 @@ fn sema_file(file: &ResolvedFile, resolver: &mut FileResolver, ns: &mut ast::Nam
 }
 
 /// Find import file, resolve it by calling sema and add it to the namespace
+fn replace_builtin_loc(symbol: ast::Symbol, import_loc: pt::Loc) -> ast::Symbol {
+    match symbol {
+        ast::Symbol::Enum(loc, enum_no) => ast::Symbol::Enum(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            enum_no,
+        ),
+        ast::Symbol::Function(items) => ast::Symbol::Function(
+            items
+                .into_iter()
+                .map(|(loc, function_no)| {
+                    if loc == pt::Loc::Builtin {
+                        (import_loc, function_no)
+                    } else {
+                        (loc, function_no)
+                    }
+                })
+                .collect(),
+        ),
+        ast::Symbol::Variable(loc, contract_no, var_no) => ast::Symbol::Variable(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            contract_no,
+            var_no,
+        ),
+        ast::Symbol::Struct(loc, struct_no) => ast::Symbol::Struct(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            struct_no,
+        ),
+        ast::Symbol::Event(items) => ast::Symbol::Event(
+            items
+                .into_iter()
+                .map(|(loc, event_no)| {
+                    if loc == pt::Loc::Builtin {
+                        (import_loc, event_no)
+                    } else {
+                        (loc, event_no)
+                    }
+                })
+                .collect(),
+        ),
+        ast::Symbol::Error(loc, error_no) => ast::Symbol::Error(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            error_no,
+        ),
+        ast::Symbol::Contract(loc, contract_no) => ast::Symbol::Contract(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            contract_no,
+        ),
+        ast::Symbol::Import(loc, import_no) => ast::Symbol::Import(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            import_no,
+        ),
+        ast::Symbol::UserType(loc, user_type_no) => ast::Symbol::UserType(
+            if loc == pt::Loc::Builtin {
+                import_loc
+            } else {
+                loc
+            },
+            user_type_no,
+        ),
+    }
+}
+
 fn resolve_import(
     import: &pt::Import,
     parent: Option<&ResolvedFile>,
@@ -225,6 +311,8 @@ fn resolve_import(
     resolver: &mut FileResolver,
     ns: &mut ast::Namespace,
 ) {
+    let import_loc = import.loc();
+
     let path = match import {
         pt::Import::Plain(f, _)
         | pt::Import::GlobalSymbol(f, _, _)
@@ -308,7 +396,7 @@ fn resolve_import(
                     ns.variable_symbols
                         .get(&(import_file_no, None, from.name.to_owned()))
                 {
-                    let import = import.clone();
+                    let import = replace_builtin_loc(import.clone(), import_loc);
 
                     let symbol = rename_to.as_ref().unwrap_or(from);
 
@@ -327,7 +415,7 @@ fn resolve_import(
                     ns.function_symbols
                         .get(&(import_file_no, None, from.name.to_owned()))
                 {
-                    let import = import.clone();
+                    let import = replace_builtin_loc(import.clone(), import_loc);
 
                     let symbol = rename_to.as_ref().unwrap_or(from);
 
@@ -368,6 +456,7 @@ fn resolve_import(
                 .collect::<Vec<(String, Option<usize>, ast::Symbol)>>();
 
             for (name, contract_no, symbol) in exports {
+                let symbol = replace_builtin_loc(symbol, import_loc);
                 let new_symbol = pt::Identifier {
                     name: name.clone(),
                     loc: filename.loc,
@@ -399,6 +488,7 @@ fn resolve_import(
                 .collect::<Vec<(String, ast::Symbol)>>();
 
             for (name, symbol) in exports {
+                let symbol = replace_builtin_loc(symbol, import_loc);
                 let new_symbol = pt::Identifier {
                     name: name.clone(),
                     loc: filename.loc,
