@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use assert_cmd::cargo_bin_cmd;
+use serde_json::Value;
 use std::fs::File;
 use tempfile::TempDir;
 
@@ -128,4 +129,29 @@ fn basic_compilation_from_toml() {
         .success();
 
     compile_cmd.current_dir(polkadot_test).assert().success();
+}
+
+#[test]
+fn standard_json_reads_sources_from_stdin() {
+    let input = r#"{
+        "language": "Solidity",
+        "sources": {
+            "input.sol": {
+                "content": "contract flipper { function flip() public {} }"
+            }
+        }
+    }"#;
+
+    let assert = cargo_bin_cmd!("solang")
+        .args(["compile", "--target", "polkadot", "--standard-json"])
+        .write_stdin(input)
+        .assert()
+        .success();
+
+    let output = String::from_utf8_lossy(&assert.get_output().stdout);
+    let json: Value = serde_json::from_str(&output).unwrap();
+
+    assert_eq!(json["target"], "Polkadot");
+    assert!(json["contracts"]["input.sol"]["flipper"].is_object());
+    assert_eq!(json["errors"].as_array().unwrap().len(), 0);
 }

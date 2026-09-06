@@ -3,8 +3,8 @@
 //! This module defines the json format for `solang compile --standard-json`.
 
 use crate::abi::ethereum::ABI;
-use serde::Serialize;
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Serialize)]
 pub struct EwasmContract {
@@ -27,6 +27,30 @@ pub struct JsonResult {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub program: String,
     pub contracts: HashMap<String, HashMap<String, JsonContract>>,
+}
+
+#[derive(Deserialize)]
+pub struct StandardJsonInput {
+    #[serde(default)]
+    pub language: Option<String>,
+    #[serde(default)]
+    pub sources: BTreeMap<String, StandardJsonSource>,
+    #[serde(default)]
+    pub settings: StandardJsonSettings,
+}
+
+#[derive(Deserialize)]
+pub struct StandardJsonSource {
+    #[serde(default)]
+    pub content: Option<String>,
+    #[serde(default)]
+    pub urls: Vec<String>,
+}
+
+#[derive(Default, Deserialize)]
+pub struct StandardJsonSettings {
+    #[serde(default)]
+    pub remappings: Vec<String>,
 }
 
 #[derive(Serialize)]

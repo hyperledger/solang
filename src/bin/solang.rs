@@ -11,13 +11,15 @@ use solang::{
     emit::Generate,
     file_resolver::FileResolver,
     sema::{ast::Namespace, file::PathDisplay},
-    standard_json::{EwasmContract, JsonContract, JsonResult},
+    standard_json::{
+        EwasmContract, JsonContract, JsonResult, OutputJson, StandardJsonInput, StandardJsonSource,
+    },
 };
 use std::{
     collections::{HashMap, HashSet},
     ffi::OsString,
     fs::{self, create_dir, create_dir_all, File},
-    io::prelude::*,
+    io::{self, prelude::*},
     path::{Path, PathBuf},
     process::exit,
 };
@@ -187,6 +189,7 @@ fn compile(compile_args: &Compile) {
     let mut namespaces = Vec::new();
 
     let mut errors = false;
+    let std_json = compile_args.compiler_output.std_json_output;
 
     // Build a map of requested contract names, and a flag specifying whether it was found or not
     let contract_names: HashSet<&str> = if let Some(values) = &compile_args.package.contracts {
@@ -195,7 +198,13 @@ fn compile(compile_args: &Compile) {
         HashSet::new()
     };
 
-    for filename in compile_args.package.get_input() {
+    let input_files = if std_json && compile_args.package.input.is_none() {
+        load_standard_json_input(&mut resolver, &mut json)
+    } else {
+        compile_args.package.get_input().clone()
+    };
+
+    for filename in &input_files {
         // TODO: this could be parallelized using e.g. rayon
         let ns = process_file(
             filename,
@@ -210,8 +219,6 @@ fn compile(compile_args: &Compile) {
 
     let mut json_contracts = HashMap::new();
 
-    let std_json = compile_args.compiler_output.std_json_output;
-
     for ns in &namespaces {
         if std_json {
             let mut out = ns.diagnostics_as_json(&resolver);
@@ -224,7 +231,6 @@ fn compile(compile_args: &Compile) {
             errors = true;
         }
     }
-
     if let Some("ast-dot") = compile_args.compiler_output.emit.as_deref() {
         exit(0);
     }
@@ -284,6 +290,8 @@ fn compile(compile_args: &Compile) {
             }
         }
     }
+
+    json.contracts = json_contracts;
 
     if std_json {
         println!("{}", serde_json::to_string(&json).unwrap());
@@ -354,11 +362,103 @@ fn process_file(
     ns
 }
 
+fn load_standard_json_input(resolver: &mut FileResolver, json: &mut JsonResult) -> Vec<PathBuf> {
+    let mut stdin = String::new();
+
+    if let Err(err) = io::stdin().read_to_string(&mut stdin) {
+        standard_json_exit_with_error(json, format!("failed to read stdin: {err}"));
+    }
+
+    let input = match serde_json::from_str::<StandardJsonInput>(&stdin) {
+        Ok(input) => input,
+        Err(err) => standard_json_exit_with_error(
+            json,
+            format!("failed to parse standard json input: {err}"),
+        ),
+    };
+
+    if let Some(language) = &input.language {
+        if language != "Solidity" {
+            standard_json_exit_with_error(
+                json,
+                format!("unsupported language '{language}', expected 'Solidity'"),
+            );
+        }
+    }
+
+    for remapping in &input.settings.remappings {
+        let (prefix, path) = match remapping.split_once('=') {
+            Some((prefix, path)) => (prefix, path),
+            None => standard_json_exit_with_error(
+                json,
+                format!("invalid remapping '{remapping}', expected '<prefix>=<path>'"),
+            ),
+        };
+
+        resolver.add_import_map(prefix.into(), PathBuf::from(path));
+    }
+
+    if input.sources.is_empty() {
+        standard_json_exit_with_error(json, "standard json input did not contain any sources");
+    }
+
+    let mut input_files = Vec::with_capacity(input.sources.len());
+
+    for (source_name, source) in input.sources {
+        let contents = load_standard_json_source(&source_name, source, json);
+
+        resolver.set_file_contents(&source_name, contents);
+        input_files.push(PathBuf::from(source_name));
+    }
+
+    input_files
+}
+
+fn load_standard_json_source(
+    source_name: &str,
+    source: StandardJsonSource,
+    json: &mut JsonResult,
+) -> String {
+    if let Some(content) = source.content {
+        return content;
+    }
+
+    for url in source.urls {
+        match fs::read_to_string(&url) {
+            Ok(contents) => return contents,
+            Err(_) => continue,
+        }
+    }
+
+    standard_json_exit_with_error(
+        json,
+        format!(
+            "source '{source_name}' is missing inline content and no readable urls were provided"
+        ),
+    );
+}
+
+fn standard_json_exit_with_error(json: &mut JsonResult, message: impl Into<String>) -> ! {
+    let message = message.into();
+
+    json.errors.push(OutputJson {
+        sourceLocation: None,
+        ty: "JSONError".to_owned(),
+        component: "solang".to_owned(),
+        severity: "error".to_owned(),
+        formattedMessage: message.clone(),
+        message,
+    });
+
+    println!("{}", serde_json::to_string(json).unwrap());
+    exit(1);
+}
+
 fn contract_results(
     contract_no: usize,
     compiler_output: &CompilerOutput,
     ns: &mut Namespace,
-    json_contracts: &mut HashMap<String, JsonContract>,
+    json_contracts: &mut HashMap<String, HashMap<String, JsonContract>>,
     seen_contracts: &mut HashMap<String, String>,
     opt: &Options,
     default_authors: &[String],
@@ -431,7 +531,12 @@ fn contract_results(
     }
 
     if std_json {
-        json_contracts.insert(
+        let source_name = ns.files[ns.top_file_no()]
+            .path
+            .to_string_lossy()
+            .into_owned();
+
+        json_contracts.entry(source_name).or_default().insert(
             bin.name,
             JsonContract {
                 abi: abi::ethereum::gen_abi(contract_no, ns),
