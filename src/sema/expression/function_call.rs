@@ -1305,6 +1305,20 @@ fn try_type_method(
                     return Err(());
                 }
 
+                if ns.target == Target::Soroban {
+                    diagnostics.push(Diagnostic::error(
+                        *loc,
+                        format!(
+                            "method '{}' is not available on Soroban. Soroban contracts \
+                        do not have a native value-transfer model; move assets through \
+                        the Stellar Asset Contract (SAC) or the token interface instead.",
+                            func.name
+                        ),
+                    ));
+
+                    return Err(());
+                }
+
                 if !is_payable {
                     diagnostics.push(Diagnostic::error(
                         *loc,
