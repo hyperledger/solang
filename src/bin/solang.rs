@@ -5,6 +5,7 @@ use clap::{Command, CommandFactory, FromArgMatches};
 use clap_complete::generate;
 use cli::PackageTrait;
 use itertools::Itertools;
+use rayon::prelude::*;
 use solang::{
     abi,
     codegen::{codegen, Options},
@@ -174,7 +175,7 @@ fn compile(compile_args: &Compile) {
         eprintln!("info: Solang version {}", env!("SOLANG_VERSION"));
     }
 
-    let mut resolver = imports_arg(&compile_args.package);
+    let resolver = imports_arg(&compile_args.package);
 
     let compile_package = &compile_args.package;
 
@@ -183,8 +184,6 @@ fn compile(compile_args: &Compile) {
         &compile_args.optimizations,
         compile_package,
     );
-
-    let mut namespaces = Vec::new();
 
     let mut errors = false;
 
@@ -195,29 +194,33 @@ fn compile(compile_args: &Compile) {
         HashSet::new()
     };
 
-    for filename in compile_args.package.get_input() {
-        // TODO: this could be parallelized using e.g. rayon
-        let ns = process_file(
-            filename,
-            &mut resolver,
-            target,
-            &compile_args.compiler_output,
-            &opt,
-        );
+    let resolved_inputs: Vec<_> = compile_args.package.get_input().iter().collect();
+    let mut namespaces_with_resolvers: Vec<_> = resolved_inputs
+        .par_iter()
+        .map(|filename| {
+            let mut resolver = resolver.clone();
+            let ns = process_file(
+                filename,
+                &mut resolver,
+                target,
+                &compile_args.compiler_output,
+                &opt,
+            );
 
-        namespaces.push(ns);
-    }
+            (ns, resolver)
+        })
+        .collect();
 
     let mut json_contracts = HashMap::new();
 
     let std_json = compile_args.compiler_output.std_json_output;
 
-    for ns in &namespaces {
+    for (ns, resolver) in &namespaces_with_resolvers {
         if std_json {
-            let mut out = ns.diagnostics_as_json(&resolver);
+            let mut out = ns.diagnostics_as_json(resolver);
             json.errors.append(&mut out);
         } else {
-            ns.print_diagnostics(&resolver, compile_args.compiler_output.verbose);
+            ns.print_diagnostics(resolver, compile_args.compiler_output.verbose);
         }
 
         if ns.diagnostics.any_errors() {
@@ -230,7 +233,11 @@ fn compile(compile_args: &Compile) {
     }
 
     // Ensure we have at least one contract
-    if !errors && namespaces.iter().all(|ns| ns.contracts.is_empty()) {
+    if !errors
+        && namespaces_with_resolvers
+            .iter()
+            .all(|(ns, _resolver)| ns.contracts.is_empty())
+    {
         eprintln!("error: no contacts found");
         errors = true;
     }
@@ -239,9 +246,9 @@ fn compile(compile_args: &Compile) {
     let not_found: Vec<_> = contract_names
         .iter()
         .filter(|name| {
-            !namespaces
+            !namespaces_with_resolvers
                 .iter()
-                .flat_map(|ns| ns.contracts.iter())
+                .flat_map(|(ns, _resolver)| ns.contracts.iter())
                 .any(|contract| **name == contract.id.name)
         })
         .collect();
@@ -268,6 +275,11 @@ fn compile(compile_args: &Compile) {
         } else {
             "0.0.1"
         };
+
+        let mut namespaces: Vec<_> = namespaces_with_resolvers
+            .drain(..)
+            .map(|(ns, _resolver)| ns)
+            .collect();
 
         for ns in &mut namespaces {
             for contract_no in 0..ns.contracts.len() {

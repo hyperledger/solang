@@ -11,7 +11,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FileResolver {
     /// Set of import paths search for imports
     import_paths: Vec<(Option<OsString>, PathBuf)>,
