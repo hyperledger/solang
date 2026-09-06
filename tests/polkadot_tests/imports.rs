@@ -2,6 +2,7 @@
 
 use solang::file_resolver::FileResolver;
 use solang::Target;
+use solang_parser::pt::Loc;
 use std::ffi::OsStr;
 
 #[test]
@@ -143,6 +144,39 @@ fn enum_import() {
         ns.diagnostics.first_error(),
         "'frum' found where 'from' expected"
     );
+}
+
+#[test]
+fn builtin_import_definition_note_uses_import_location() {
+    let mut cache = FileResolver::default();
+
+    cache.set_file_contents(
+        "a.sol",
+        r#"
+        import "polkadot";
+
+        contract Foo {
+            function chain_extension() public pure {}
+        }
+        "#
+        .to_string(),
+    );
+
+    let ns = solang::parse_and_resolve(OsStr::new("a.sol"), &mut cache, Target::default_polkadot());
+
+    assert_eq!(
+        ns.diagnostics.first_error(),
+        "chain_extension is already defined as a builtin function"
+    );
+
+    let diagnostics = ns.diagnostics.errors();
+    assert_eq!(diagnostics.len(), 1);
+    assert_eq!(diagnostics[0].notes.len(), 1);
+    assert_eq!(
+        diagnostics[0].notes[0].message,
+        "location of previous definition"
+    );
+    assert!(matches!(diagnostics[0].notes[0].loc, Loc::File(..)));
 }
 
 #[test]

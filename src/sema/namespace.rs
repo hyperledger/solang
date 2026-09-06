@@ -98,6 +98,9 @@ impl Namespace {
             self.function_symbols
                 .get(&(file_no, contract_no, id.name.to_owned()))
         {
+            let already_defined_as_builtin = v
+                .iter()
+                .any(|(_, func_no)| self.functions[*func_no].loc == pt::Loc::Builtin);
             let notes = v
                 .iter()
                 .map(|(pos, _)| Note {
@@ -108,7 +111,11 @@ impl Namespace {
 
             self.diagnostics.push(Diagnostic::error_with_notes(
                 id.loc,
-                format!("{} is already defined as a function", id.name),
+                if already_defined_as_builtin {
+                    format!("{} is already defined as a builtin function", id.name)
+                } else {
+                    format!("{} is already defined as a function", id.name)
+                },
                 notes,
             ));
 

@@ -149,6 +149,7 @@ fn convert_diagnostic(
     .with_message(msg.message.to_owned());
 
     let mut labels = Vec::new();
+    let mut plain_notes = Vec::new();
 
     if let Loc::File(file_no, start, end) = msg.loc {
         labels.push(diagnostic::Label::primary(file_id[&file_no], start..end));
@@ -161,14 +162,20 @@ fn convert_diagnostic(
                     .with_message(note.message.to_owned()),
             );
         } else {
-            unreachable!("note without file position");
+            plain_notes.push(note.message.to_owned());
         }
     }
 
-    if labels.is_empty() {
+    let diagnostic = if labels.is_empty() {
         diagnostic
     } else {
         diagnostic.with_labels(labels)
+    };
+
+    if plain_notes.is_empty() {
+        diagnostic
+    } else {
+        diagnostic.with_notes(plain_notes)
     }
 }
 

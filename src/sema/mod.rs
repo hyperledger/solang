@@ -403,6 +403,24 @@ fn resolve_import(
                     name: name.clone(),
                     loc: filename.loc,
                 };
+                let symbol = match symbol {
+                    ast::Symbol::Function(funcs) => ast::Symbol::Function(
+                        funcs
+                            .into_iter()
+                            .map(|(loc, func_no)| {
+                                (
+                                    if matches!(loc, pt::Loc::File(..)) {
+                                        loc
+                                    } else {
+                                        filename.loc
+                                    },
+                                    func_no,
+                                )
+                            })
+                            .collect(),
+                    ),
+                    other => other,
+                };
 
                 // Only add symbol if it does not already exist with same definition
                 if let Some(existing) = ns.function_symbols.get(&(file_no, None, name.clone())) {
