@@ -2222,21 +2222,23 @@ pub(super) fn parse_call_args(
     }
 
     if ns.target == Target::Solana {
-        if res.accounts.is_absent()
-            && !matches!(
-                ns.functions[context.function_no.unwrap()].visibility,
-                Visibility::External(_)
-            )
-            && !ns.functions[context.function_no.unwrap()].is_constructor()
-        {
-            diagnostics.push(Diagnostic::error(
-                *loc,
-                "accounts are required for calling a contract. You can either provide the \
-            accounts with the {accounts: ...} call argument or change this function's \
-            visibility to external"
-                    .to_string(),
-            ));
-            return Err(());
+        if let Some(function_no) = context.function_no {
+            if res.accounts.is_absent()
+                && !matches!(
+                    ns.functions[function_no].visibility,
+                    Visibility::External(_)
+                )
+                && !ns.functions[function_no].is_constructor()
+            {
+                diagnostics.push(Diagnostic::error(
+                    *loc,
+                    "accounts are required for calling a contract. You can either provide the \
+                accounts with the {accounts: ...} call argument or change this function's \
+                visibility to external"
+                        .to_string(),
+                ));
+                return Err(());
+            }
         }
 
         if let Some(callee_contract_no) = callee_contract {

@@ -4,7 +4,7 @@
 
 mod data_account;
 
-use crate::sema::ast::{Expression, Parameter, Statement, TryCatch, Type};
+use crate::sema::ast::{Expression, ExternalCallAccounts, Parameter, Statement, TryCatch, Type};
 use crate::sema::yul::ast::InlineAssembly;
 use crate::{parse_and_resolve, sema::ast, FileResolver, Target};
 use solang_parser::pt::Loc;
@@ -608,6 +608,58 @@ contract Child {
         errors[0].message,
         "accounts are required for calling a contract. You can either provide the accounts with the {accounts: ...} call argument or change this function's visibility to external"
     );
+}
+
+#[test]
+fn state_initializer_contract_call_requires_accounts() {
+    let src = r#"
+    contract C {
+        uint public x = this.foo();
+
+        function foo() external pure returns (uint) {
+            return 1;
+        }
+    }
+    "#;
+    let mut cache = FileResolver::default();
+    cache.set_file_contents("test.sol", src.to_string());
+
+    let ns = parse_and_resolve(OsStr::new("test.sol"), &mut cache, Target::Solana);
+
+    let errors = ns.diagnostics.errors();
+    assert!(errors.is_empty());
+
+    let contract = &ns.contracts[0];
+    let foo_no = *contract
+        .functions
+        .iter()
+        .find(|function_no| ns.functions[**function_no].name == "foo")
+        .unwrap();
+
+    let initializer = contract.variables[0].initializer.as_ref().unwrap();
+
+    match initializer {
+        Expression::ExternalFunctionCall {
+            returns,
+            function,
+            args,
+            call_args,
+            ..
+        } => {
+            assert_eq!(returns, &vec![Type::Uint(256)]);
+            assert!(args.is_empty());
+            assert!(matches!(
+                call_args.accounts,
+                ExternalCallAccounts::AbsentArgument
+            ));
+
+            assert!(matches!(
+                function.as_ref(),
+                Expression::ExternalFunction { function_no, .. } if *function_no == foo_no
+            ));
+        }
+        _ => panic!("unexpected initializer expression: {initializer:?}"),
+    }
 }
 
 #[test]
