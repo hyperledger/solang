@@ -50,7 +50,7 @@ pub enum Commands {
 
 #[derive(Args)]
 pub struct New {
-    #[arg(name = "TARGETNAME",required= true, long = "target", value_parser = ["solana", "polkadot", "evm"], help = "Target to build for [possible values: solana, polkadot]", num_args = 1, hide_possible_values = true)]
+    #[arg(name = "TARGETNAME",required= true, long = "target", value_parser = ["solana", "polkadot", "evm", "riscv"], help = "Target to build for [possible values: solana, polkadot, riscv]", num_args = 1, hide_possible_values = true)]
     pub target_name: String,
 
     #[arg(name = "INPUT", help = "Name of the project", num_args = 1, value_parser = ValueParser::os_string())]
@@ -261,7 +261,7 @@ pub struct CompilerOutput {
 
 #[derive(Args)]
 pub struct TargetArg {
-    #[arg(name = "TARGET",required= true, long = "target", value_parser = ["solana", "polkadot", "evm"], help = "Target to build for [possible values: solana, polkadot]", num_args = 1, hide_possible_values = true)]
+    #[arg(name = "TARGET",required= true, long = "target", value_parser = ["solana", "polkadot", "evm", "riscv"], help = "Target to build for [possible values: solana, polkadot, riscv]", num_args = 1, hide_possible_values = true)]
     pub name: String,
 
     #[arg(name = "ADDRESS_LENGTH", help = "Address length on the Polkadot Parachain", long = "address-length", num_args = 1, value_parser = value_parser!(u64).range(4..1024))]
@@ -273,7 +273,7 @@ pub struct TargetArg {
 
 #[derive(Args, Deserialize, Debug, PartialEq)]
 pub struct CompileTargetArg {
-    #[arg(name = "TARGET", long = "target", value_parser = ["solana", "polkadot", "evm", "soroban"], help = "Target to build for [possible values: solana, polkadot]", num_args = 1, hide_possible_values = true)]
+    #[arg(name = "TARGET", long = "target", value_parser = ["solana", "polkadot", "evm", "soroban", "riscv"], help = "Target to build for [possible values: solana, polkadot, riscv]", num_args = 1, hide_possible_values = true)]
     pub name: Option<String>,
 
     #[arg(name = "ADDRESS_LENGTH", help = "Address length on the Polkadot Parachain", long = "address-length", num_args = 1, value_parser = value_parser!(u64).range(4..1024))]
@@ -449,7 +449,7 @@ impl TargetArgTrait for CompileTargetArg {
 pub(crate) fn target_arg<T: TargetArgTrait>(target_arg: &T) -> Target {
     let target_name = target_arg.get_name();
 
-    if target_name == "solana" || target_name == "evm" {
+    if target_name == "solana" || target_name == "evm" || target_name == "riscv" {
         if target_arg.get_address_length().is_some() {
             eprintln!("error: address length cannot be modified except for polkadot target");
             exit(1);
@@ -469,6 +469,7 @@ pub(crate) fn target_arg<T: TargetArgTrait>(target_arg: &T) -> Target {
         },
         "evm" => solang::Target::EVM,
         "soroban" => solang::Target::Soroban,
+        "riscv" => solang::Target::Riscv,
         _ => unreachable!(),
     };
 

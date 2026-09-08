@@ -36,12 +36,13 @@ impl Namespace {
     pub fn new(target: Target) -> Self {
         let (address_length, value_length) = match target {
             Target::EVM => (20, 32),
+            Target::Riscv => (20, 32),
+            Target::Solana => (32, 8),
+            Target::Soroban => (32, 64),
             Target::Polkadot {
                 address_length,
                 value_length,
             } => (address_length, value_length),
-            Target::Solana => (32, 8),
-            Target::Soroban => (32, 64),
         };
 
         let mut ns = Namespace {

@@ -33,6 +33,7 @@ pub enum Target {
     /// Ethereum EVM, see <https://ethereum.org/en/developers/docs/evm/>
     EVM,
     Soroban,
+    Riscv,
 }
 
 impl fmt::Display for Target {
@@ -42,6 +43,7 @@ impl fmt::Display for Target {
             Target::Polkadot { .. } => write!(f, "Polkadot"),
             Target::EVM => write!(f, "EVM"),
             Target::Soroban => write!(f, "Soroban"),
+            Target::Riscv => write!(f, "riscv"),
         }
     }
 }
@@ -55,6 +57,7 @@ impl PartialEq for Target {
             Target::Polkadot { .. } => matches!(other, Target::Polkadot { .. }),
             Target::EVM => matches!(other, Target::EVM),
             Target::Soroban => matches!(other, Target::Soroban),
+            Target::Riscv => matches!(other, Target::Riscv),
         }
     }
 }
@@ -79,6 +82,8 @@ impl Target {
             "solana" => Some(Target::Solana),
             "polkadot" => Some(Target::default_polkadot()),
             "evm" => Some(Target::EVM),
+            "soroban" => Some(Target::Soroban),
+            "riscv" => Some(Target::Riscv),
             _ => None,
         }
     }
@@ -88,6 +93,7 @@ impl Target {
         match self {
             // Solana uses ELF dynamic shared object (BPF)
             Target::Solana => "so",
+            Target::Riscv => "o",
             // Everything else generates webassembly
             _ => "wasm",
         }
@@ -98,7 +104,7 @@ impl Target {
         match *self {
             // Solana is BPF, which is 64 bit
             Target::Solana => 64,
-            // All others are WebAssembly in 32 bit mode
+            // All others are WebAssembly / 32 bit mode
             _ => 32,
         }
     }

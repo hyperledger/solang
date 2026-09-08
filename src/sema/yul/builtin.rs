@@ -23,6 +23,7 @@ impl YulBuiltinPrototype {
             Target::Polkadot { .. } => self.availability[1],
             Target::Solana => self.availability[2],
             Target::Soroban => unimplemented!(),
+            Target::Riscv => false,
         }
     }
 }

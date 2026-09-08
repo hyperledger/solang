@@ -5,8 +5,18 @@
 #include <stdbool.h>
 #include "stdlib.h"
 
-#ifndef __wasm__
+#if !defined(__wasm__) && !defined(__riscv)
 #include "solana_sdk.h"
+#endif
+
+#ifdef __riscv
+// r55 sizes the emulator's memory from the ELF program headers, so the heap
+// has to be a .bss object rather than a region picked past the end of the
+// image, which would fall outside the mapped DRAM.
+#define RISCV_HEAP_SIZE (64 * 1024)
+static uint8_t riscv_heap[RISCV_HEAP_SIZE];
+
+extern void __sys_revert(const void *data, uint64_t len);
 #endif
 
 /*
@@ -34,6 +44,16 @@ void __init_heap()
     first->next = first->prev = NULL;
     first->allocated = false;
     first->length = (uint32_t)(__builtin_wasm_memory_size(0) * 0x10000 - (size_t)first - sizeof(struct chunk));
+}
+#elif defined(__riscv)
+#define HEAP_START ((struct chunk *)riscv_heap)
+
+void __init_heap()
+{
+    struct chunk *first = HEAP_START;
+    first->next = first->prev = NULL;
+    first->allocated = false;
+    first->length = RISCV_HEAP_SIZE - sizeof(struct chunk);
 }
 #else
 #define HEAP_START ((struct chunk *)0x300000000)
@@ -112,6 +132,9 @@ void *__attribute__((noinline)) __malloc(uint32_t size)
     {
         // go bang
 #ifdef __wasm__
+        __builtin_unreachable();
+#elif defined(__riscv)
+        __sys_revert(NULL, 0);
         __builtin_unreachable();
 #else
         sol_log("out of heap memory");

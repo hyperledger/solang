@@ -17,6 +17,7 @@ use tempfile::tempdir;
 use wasm_opt::OptimizationOptions;
 
 use crate::codegen::{cfg::ReturnCode, Options};
+use crate::emit::riscv::RiscvTarget;
 use crate::emit::{polkadot, TargetRuntime};
 use crate::emit::{solana, BinaryOp, Generate};
 use crate::linker::link;
@@ -187,6 +188,7 @@ impl<'a> Binary<'a> {
                 polkadot::PolkadotTarget::build(context, &std_lib, contract, ns, opt)
             }
             Target::Solana => solana::SolanaTarget::build(context, &std_lib, contract, ns, opt),
+            Target::Riscv => RiscvTarget::build(context, &std_lib, contract, ns, opt),
             #[cfg(feature = "soroban")]
             Target::Soroban => {
                 soroban::SorobanTarget::build(context, &std_lib, contract, ns, opt, _contract_no)
@@ -217,6 +219,25 @@ impl<'a> Binary<'a> {
                 pass_manager.run_on(&self.module);
             }
             _ => {}
+        }
+
+        // The bundled LLVM has no RISC-V backend, so object code is produced
+        // out of process. Linking still uses the in-tree LLD.
+        if self.ns.target == Target::Riscv {
+            let obj = crate::emit::riscv::codegen::object_from_module(
+                &self.module,
+                generate == Generate::Assembly,
+            )?;
+
+            let code = if generate == Generate::Linked {
+                link(&obj, &self.name, self.ns.target).to_vec()
+            } else {
+                obj
+            };
+
+            *self.code.borrow_mut() = code.clone();
+
+            return Ok(code);
         }
 
         let target =
@@ -1307,6 +1328,22 @@ fn load_stdlib<'a>(context: &'a Context, target: &Target) -> Module<'a> {
         return module;
     }
 
+    if *target == Target::Riscv {
+        let memory = MemoryBuffer::create_from_memory_range(RISCV_IR[0], "riscv_bc");
+
+        let module = Module::parse_bitcode_from_buffer(&memory, context).unwrap();
+
+        for bc in RISCV_IR.iter().skip(1) {
+            let memory = MemoryBuffer::create_from_memory_range(bc, "riscv_bc");
+
+            module
+                .link_in_module(Module::parse_bitcode_from_buffer(&memory, context).unwrap())
+                .unwrap();
+        }
+
+        return module;
+    }
+
     let memory = MemoryBuffer::create_from_memory_range(WASM_IR[0], "wasm_bc");
 
     let module = Module::parse_bitcode_from_buffer(&memory, context).unwrap();
@@ -1346,6 +1383,14 @@ static WASM_IR: [&[u8]; 5] = [
     include_bytes!("../../target/wasm/bigint.bc"),
     include_bytes!("../../target/wasm/format.bc"),
     include_bytes!("../../target/wasm/soroban.bc"),
+];
+
+static RISCV_IR: [&[u8]; 5] = [
+    include_bytes!("../../target/riscv/stdlib.bc"),
+    include_bytes!("../../target/riscv/heap.bc"),
+    include_bytes!("../../target/riscv/bigint.bc"),
+    include_bytes!("../../target/riscv/format.bc"),
+    include_bytes!("../../target/riscv/riscv.bc"),
 ];
 
 static RIPEMD160_IR: &[u8] = include_bytes!("../../target/wasm/ripemd160.bc");

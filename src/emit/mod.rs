@@ -22,6 +22,7 @@ mod instructions;
 mod loop_builder;
 mod math;
 pub mod polkadot;
+pub mod riscv;
 pub mod solana;
 
 #[cfg(feature = "soroban")]
@@ -322,28 +323,30 @@ pub enum Generate {
 impl Target {
     /// LLVM Target name
     fn llvm_target_name(&self) -> &'static str {
-        if *self == Target::Solana {
-            "sbf"
-        } else {
-            "wasm32"
+        match self {
+            Target::Solana => "sbf",
+            Target::Riscv => "riscv64",
+            _ => "wasm32",
         }
     }
 
     /// LLVM Target triple
     fn llvm_target_triple(&self) -> TargetTriple {
-        TargetTriple::create(if *self == Target::Solana {
-            "sbf-unknown-unknown"
-        } else {
-            "wasm32-unknown-unknown-wasm"
+        TargetTriple::create(match self {
+            Target::Solana => "sbf-unknown-unknown",
+            // r55 runs bare-metal RV64 with no operating system.
+            Target::Riscv => "riscv64-unknown-none-elf",
+            _ => "wasm32-unknown-unknown-wasm",
         })
     }
 
     /// LLVM Target triple
     fn llvm_features(&self) -> &'static str {
-        if *self == Target::Solana {
-            "+solana"
-        } else {
-            ""
+        match self {
+            Target::Solana => "+solana",
+            // rvemu implements RV64IMAC.
+            Target::Riscv => "+m,+a,+c",
+            _ => "",
         }
     }
 }

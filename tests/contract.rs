@@ -105,6 +105,9 @@ fn parse_file(path: PathBuf, target: Target) -> io::Result<()> {
                     Target::Soroban => {
                         todo!()
                     }
+                    Target::Riscv => {
+                        todo!()
+                    }
                 };
 
                 let _ = generate_abi(contract_no, &ns, &code, false, &["unknown".into()], "0.1.0");

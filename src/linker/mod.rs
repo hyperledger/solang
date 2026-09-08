@@ -2,6 +2,7 @@
 
 mod bpf;
 mod polkadot_wasm;
+mod riscv;
 mod soroban_wasm;
 use crate::Target;
 use once_cell::sync::Lazy;
@@ -19,6 +20,7 @@ pub fn link(input: &[u8], name: &str, target: Target) -> Vec<u8> {
     match target {
         Target::Solana => bpf::link(input, name),
         Target::Soroban => soroban_wasm::link(input, name),
+        Target::Riscv => riscv::link(input, name),
         Target::Polkadot {
             address_length: _,
             value_length: _,
