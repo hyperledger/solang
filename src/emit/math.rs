@@ -352,7 +352,7 @@ pub(super) fn multiply<'a, T: TargetRuntime<'a> + ?Sized>(
 
             // Unsigned overflow detection Approach:
             // If the size is a multiple of 32, we call __mul32_with_builtin_ovf and it returns an overflow flag (check __mul32_with_builtin_ovf in stdlib/bigint.c documentation)
-            // If that is not the case, some extra work has to be done. We have to check the extended bits for any set bits. If there is any, an overflow occured.
+            // If that is not the case, some extra work has to be done. We have to check the extended bits for any set bits. If there is any, an overflow occurred.
             // For example, if we have uint72, it will be extended to uint96. __mul32 with ovf will raise an ovf flag if the result overflows 96 bits, not 72.
             // We account for that by checking the extended leftmost bits. In the example mentioned, they will be 96-72=24 bits.
             let return_val = bin
@@ -405,7 +405,7 @@ pub(super) fn multiply<'a, T: TargetRuntime<'a> + ?Sized>(
             // Until this point, we only checked the extended bits for ovf. But mul ovf can take place any where from bit size to double bit size.
             // For example: If we have uint72, it will be extended to uint96. We only checked the most significant 24 bits for overflow, which can happen up to 72*2=144 bits.
             // bool __mul32_with_builtin_ovf takes care of overflowing bits beyond 96.
-            // What is left now is to or these two ovf flags, and check if any one of them is set. If so, an overflow occured.
+            // What is left now is to or these two ovf flags, and check if any one of them is set. If so, an overflow occurred.
             let lowbit = bin
                 .builder
                 .build_int_truncate(
