@@ -78,3 +78,40 @@ fn struct_as_reference() {
         ])
     );
 }
+
+#[test]
+fn user_defined_type_in_struct() {
+    let mut vm = build_solidity(
+        r#"
+        type C is address;
+        struct S { C c; }
+        contract T {
+            S s;
+            function set_c(C c) public {
+                s.c = c;
+            }
+            function get_c() public view returns (C) {
+                return s.c;
+            }
+        }
+        "#,
+    );
+
+    let data_account = vm.initialize_data_account();
+    vm.function("new")
+        .accounts(vec![("dataAccount", data_account)])
+        .call();
+
+    let address = [0x42; 32];
+    vm.function("set_c")
+        .arguments(&[BorshToken::Address(address)])
+        .accounts(vec![("dataAccount", data_account)])
+        .call();
+
+    let res = vm
+        .function("get_c")
+        .accounts(vec![("dataAccount", data_account)])
+        .call()
+        .unwrap();
+    assert_eq!(res, BorshToken::Address(address));
+}

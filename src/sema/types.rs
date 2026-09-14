@@ -1633,6 +1633,7 @@ impl Type {
                 .max()
                 .unwrap_or(1), // All fields had infinite size, so we just pretend the alignment is one
             Type::InternalFunction { .. } => ns.target.ptr_size().into(),
+            Type::UserType(no) => ns.user_types[*no].ty.align_of(ns),
             _ => 1,
         }
     }
@@ -1835,6 +1836,7 @@ impl Type {
                 Type::Mapping(..) => BigInt::from(4),
                 Type::Ref(ty) | Type::StorageRef(_, ty) => ty.storage_align(ns),
                 Type::Unresolved => BigInt::one(),
+                Type::UserType(no) => ns.user_types[*no].ty.storage_align(ns),
                 _ => unimplemented!(),
             };
 
